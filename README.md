@@ -13,3 +13,22 @@ python -m http.server 8080
 ```
 
 然后访问 `http://localhost:8080`。
+
+## 内容后台
+
+站点已加入轻量内容后台，使用 Python 标准库和 SQLite，不需要安装依赖。
+
+```powershell
+python cms_server.py
+```
+
+访问：
+
+- 官网：`http://127.0.0.1:8080/`
+- 后台：`http://127.0.0.1:8080/admin`
+
+默认管理员账号：`admin`
+
+默认密码：`admin123`
+
+首次正式部署前请登录后台修改密码，或在首次启动前设置环境变量 `CMS_ADMIN_PASSWORD`。

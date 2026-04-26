@@ -1,1 +1,5 @@
 ziliao/
+data/
+uploads/
+__pycache__/
+cms-server*.log

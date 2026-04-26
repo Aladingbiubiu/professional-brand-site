@@ -590,6 +590,14 @@ a {
     color: var(--navy);
 }
 
+.article-list h2 a {
+    color: inherit;
+}
+
+.article-list h2 a:hover {
+    color: var(--gold);
+}
+
 .feature p,
 .service-item p,
 .article-list p,
@@ -702,6 +710,159 @@ a {
     padding-left: 28px;
 }
 
+.profile-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 28px;
+}
+
+.profile-highlights div {
+    padding: 20px;
+    background: #f7f9fd;
+    border: 1px solid var(--line);
+}
+
+.profile-highlights strong {
+    display: block;
+    color: var(--navy);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.profile-highlights span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.credential-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.credential-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.credential-visual {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    min-height: 210px;
+    padding: 18px;
+    display: grid;
+    place-items: center;
+    background:
+        linear-gradient(135deg, rgba(8, 33, 93, 0.08), rgba(213, 164, 90, 0.12)),
+        #f8fafc;
+}
+
+.credential-visual.photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 14px 22px rgba(8, 33, 93, 0.16));
+}
+
+.credential-visual span {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    min-width: 92px;
+    padding: 8px 12px;
+    color: var(--gold-2);
+    background: rgba(8, 33, 93, 0.9);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-align: center;
+}
+
+.credential-card h3 {
+    margin: 24px 24px 10px;
+    color: var(--navy);
+    font-size: 20px;
+}
+
+.credential-card p {
+    margin: 0;
+    padding: 0 24px 28px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.network-section {
+    color: #fff;
+    background: var(--navy);
+}
+
+.network-map {
+    display: grid;
+    grid-template-columns: 0.75fr 1.25fr;
+    gap: 56px;
+    align-items: center;
+}
+
+.network-copy h2 {
+    margin: 8px 0 14px;
+    color: #fff;
+    font-size: clamp(28px, 3vw, 38px);
+    line-height: 1.25;
+}
+
+.network-copy p {
+    margin: 0;
+    color: #c4cdea;
+}
+
+.network-nodes {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.network-nodes::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    border: 1px solid rgba(213, 164, 90, 0.28);
+    pointer-events: none;
+}
+
+.network-node {
+    position: relative;
+    z-index: 1;
+    min-height: 118px;
+    padding: 22px 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.network-node.primary {
+    background: var(--gold);
+}
+
+.network-node strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #fff;
+    font-size: 24px;
+}
+
+.network-node span {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
 .timeline article,
 .service-item {
     display: grid;
@@ -734,9 +895,76 @@ a {
     color: var(--navy);
 }
 
+.process-flow {
+    align-items: stretch;
+}
+
+.process-flow .section-head {
+    grid-column: 1 / -1;
+    max-width: 720px;
+    margin-bottom: 10px;
+}
+
+.process-flow article {
+    position: relative;
+    min-height: 220px;
+    padding: 34px 28px 30px;
+    border-top: 4px solid var(--gold);
+    box-shadow: 0 14px 36px rgba(8, 33, 93, 0.1);
+}
+
+.process-flow article::after {
+    content: "";
+    position: absolute;
+    top: 54px;
+    right: -18px;
+    width: 36px;
+    height: 2px;
+    background: var(--gold);
+    z-index: 1;
+}
+
+.process-flow article:last-child::after {
+    display: none;
+}
+
+.process-flow article > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 22px;
+    color: #fff;
+    background: var(--navy);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.process-flow strong {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 20px;
+}
+
+.process-flow p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.75;
+}
+
 .article-list {
     display: grid;
     gap: 20px;
+}
+
+.article-list.empty {
+    padding: 34px;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--line);
 }
 
 .article-list article {
@@ -752,6 +980,36 @@ a {
     background: #edf2fb;
     padding: 7px 14px;
     font-size: 13px;
+}
+
+.article-detail {
+    max-width: 860px;
+}
+
+.article-meta {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    color: var(--muted);
+}
+
+.article-cover {
+    width: 100%;
+    max-height: 460px;
+    margin-bottom: 28px;
+    object-fit: cover;
+}
+
+.article-detail .rich-text {
+    margin-bottom: 28px;
+}
+
+.article-detail .rich-text p {
+    margin: 0 0 18px;
+}
+
+.hidden {
+    display: none !important;
 }
 
 .contact-grid {
@@ -984,9 +1242,15 @@ textarea:focus {
     .split,
     .news-layout,
     .info-grid,
+    .network-map,
     .contact-grid {
         grid-template-columns: 1fr;
         gap: 34px;
+    }
+
+    .credential-gallery,
+    .network-nodes {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .info-center {
@@ -996,6 +1260,10 @@ textarea:focus {
     .info-center .container {
         width: 100%;
         padding: 34px 20px;
+    }
+
+    .process-flow article::after {
+        display: none;
     }
 
     .project-carousel,
@@ -1046,10 +1314,17 @@ textarea:focus {
     .feature-grid,
     .feature-grid.four,
     .strength-grid,
+    .credential-gallery,
+    .profile-highlights,
+    .network-nodes,
     .process,
     .footer-grid,
     .contact-form {
         grid-template-columns: 1fr;
+    }
+
+    .network-nodes::before {
+        display: none;
     }
 
     .image-card {
