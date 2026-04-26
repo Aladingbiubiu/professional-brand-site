@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 154" role="img" aria-labelledby="logoTitle logoDesc">
-  <title id="logoTitle">山东众信价格评估拍卖有限公司</title>
-  <desc id="logoDesc">左侧为众信竖向印章，右侧为山东众信价格评估拍卖有限公司中文名称及英文名称。</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 154" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">山东众信房地产评估测绘有限公司 山东众信价格评估拍卖有限公司</title>
+  <desc id="logoDesc">左侧为众信竖向印章，右侧为山东众信房地产评估测绘有限公司和山东众信价格评估拍卖有限公司双主体名称。</desc>
   <defs>
     <linearGradient id="sealGold" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#5b3716"/>
@@ -8,7 +8,7 @@
       <stop offset="1" stop-color="#5d3816"/>
     </linearGradient>
   </defs>
-  <rect width="760" height="154" fill="#fff"/>
+  <rect width="820" height="154" fill="#fff"/>
   <g transform="translate(4 4)">
     <rect x="0" y="0" width="70" height="146" fill="#fff" stroke="url(#sealGold)" stroke-width="6"/>
     <rect x="9" y="9" width="52" height="100" fill="none" stroke="url(#sealGold)" stroke-width="2"/>
@@ -17,8 +17,9 @@
     <rect x="0" y="112" width="70" height="34" fill="url(#sealGold)"/>
     <text x="35" y="135" fill="#fff" font-family="Georgia, Times New Roman, serif" font-size="17" font-style="italic" text-anchor="middle">ZXPA</text>
   </g>
-  <g transform="translate(102 37)">
-    <text x="0" y="42" fill="#092a70" font-family="STXingkai, KaiTi, STKaiti, SimSun, serif" font-size="42" font-weight="700" letter-spacing="2">山东众信价格评估拍卖有限公司</text>
-    <text x="0" y="84" fill="#65451f" font-family="Georgia, Times New Roman, serif" font-size="25" font-weight="700" letter-spacing="2.5">ZHONGXIN PRICE APPRAISAL &amp; AUCTION CO., LTD.</text>
+  <g transform="translate(102 28)">
+    <text x="0" y="32" fill="#092a70" font-family="STXingkai, KaiTi, STKaiti, SimSun, serif" font-size="32" font-weight="700" letter-spacing="1.2">山东众信房地产评估测绘有限公司</text>
+    <text x="0" y="72" fill="#092a70" font-family="STXingkai, KaiTi, STKaiti, SimSun, serif" font-size="32" font-weight="700" letter-spacing="1.2">山东众信价格评估拍卖有限公司</text>
+    <text x="0" y="112" fill="#65451f" font-family="Georgia, Times New Roman, serif" font-size="20" font-weight="700" letter-spacing="2">ZHONGXIN APPRAISAL · SURVEYING · AUCTION SERVICES</text>
   </g>
 </svg>

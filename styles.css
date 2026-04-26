@@ -63,13 +63,13 @@ a {
 .brand {
     display: inline-flex;
     align-items: center;
-    min-width: 420px;
-    max-width: 500px;
+    min-width: 460px;
+    max-width: 560px;
 }
 
 .brand-logo {
     width: 100%;
-    height: 72px;
+    height: 76px;
     object-fit: contain;
     object-position: left center;
 }
@@ -927,7 +927,7 @@ textarea:focus {
 
     .brand {
         min-width: auto;
-        max-width: 330px;
+        max-width: 350px;
         flex: 1;
     }
 
