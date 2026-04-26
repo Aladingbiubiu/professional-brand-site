@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 154" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">山东众信价格评估拍卖有限公司</title>
+  <desc id="logoDesc">左侧为众信竖向印章，右侧为山东众信价格评估拍卖有限公司中文名称及英文名称。</desc>
+  <defs>
+    <linearGradient id="sealGold" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#5b3716"/>
+      <stop offset="0.52" stop-color="#9a6d2e"/>
+      <stop offset="1" stop-color="#5d3816"/>
+    </linearGradient>
+  </defs>
+  <rect width="760" height="154" fill="#fff"/>
+  <g transform="translate(4 4)">
+    <rect x="0" y="0" width="70" height="146" fill="#fff" stroke="url(#sealGold)" stroke-width="6"/>
+    <rect x="9" y="9" width="52" height="100" fill="none" stroke="url(#sealGold)" stroke-width="2"/>
+    <text x="35" y="50" fill="url(#sealGold)" font-family="KaiTi, STKaiti, SimSun, serif" font-size="34" font-weight="700" text-anchor="middle">众</text>
+    <text x="35" y="91" fill="url(#sealGold)" font-family="KaiTi, STKaiti, SimSun, serif" font-size="34" font-weight="700" text-anchor="middle">信</text>
+    <rect x="0" y="112" width="70" height="34" fill="url(#sealGold)"/>
+    <text x="35" y="135" fill="#fff" font-family="Georgia, Times New Roman, serif" font-size="17" font-style="italic" text-anchor="middle">ZXPA</text>
+  </g>
+  <g transform="translate(102 37)">
+    <text x="0" y="42" fill="#092a70" font-family="STXingkai, KaiTi, STKaiti, SimSun, serif" font-size="42" font-weight="700" letter-spacing="2">山东众信价格评估拍卖有限公司</text>
+    <text x="0" y="84" fill="#65451f" font-family="Georgia, Times New Roman, serif" font-size="25" font-weight="700" letter-spacing="2.5">ZHONGXIN PRICE APPRAISAL &amp; AUCTION CO., LTD.</text>
+  </g>
+</svg>
