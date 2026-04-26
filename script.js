@@ -28,3 +28,67 @@ if (contactForm) {
         contactForm.reset();
     });
 }
+
+const slides = Array.from(document.querySelectorAll(".project-slide"));
+const dots = Array.from(document.querySelectorAll(".carousel-dots button"));
+let activeSlide = 0;
+let carouselTimer;
+
+function showSlide(index) {
+    if (!slides.length || !dots.length) {
+        return;
+    }
+
+    activeSlide = (index + slides.length) % slides.length;
+
+    slides.forEach((slide, slideIndex) => {
+        slide.classList.toggle("active", slideIndex === activeSlide);
+    });
+
+    dots.forEach((dot, dotIndex) => {
+        dot.classList.toggle("active", dotIndex === activeSlide);
+    });
+}
+
+function startCarousel() {
+    if (slides.length <= 1) {
+        return;
+    }
+
+    window.clearInterval(carouselTimer);
+    carouselTimer = window.setInterval(() => {
+        showSlide(activeSlide + 1);
+    }, 5000);
+}
+
+if (slides.length && dots.length) {
+    dots.forEach((dot, index) => {
+        dot.addEventListener("click", () => {
+            showSlide(index);
+            startCarousel();
+        });
+    });
+
+    startCarousel();
+}
+
+const tabButtons = Array.from(document.querySelectorAll(".info-tabs button"));
+const tabPanels = Array.from(document.querySelectorAll(".tab-panel"));
+
+if (tabButtons.length && tabPanels.length) {
+    tabButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            const tab = button.dataset.tab;
+
+            tabButtons.forEach((item) => {
+                const isActive = item === button;
+                item.classList.toggle("active", isActive);
+                item.setAttribute("aria-selected", String(isActive));
+            });
+
+            tabPanels.forEach((panel) => {
+                panel.classList.toggle("active", panel.dataset.panel === tab);
+            });
+        });
+    });
+}
