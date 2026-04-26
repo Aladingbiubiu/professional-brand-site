@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import secrets
 import shutil
 import sqlite3
@@ -131,8 +132,8 @@ def seed_articles(conn: sqlite3.Connection) -> None:
         ("司法辅助拍卖项目委托流程及资料清单提示", "auction", "2026-03-28", "提示司法辅助拍卖项目的委托流程、资料清单和前期核验要点。", "", "", "", "published", 70, "提示"),
         ("涉诉财物价格评估中现场勘验的重要性", "industry", "2026-04-18", "现场勘验、资料核验和市场信息共同影响涉诉财物价格评估成果质量。", "", "", "", "published", 90, "观察"),
         ("征迁补偿评估如何提高资料完整性和复核效率", "industry", "2026-04-05", "围绕征迁补偿评估中的资料准备、现场确认和成果复核提出实务观察。", "", "", "", "published", 80, "评估"),
-        ("资产处置项目合作机构征集：评估、拍卖、咨询协同服务", "investment", "2026-04-15", "面向资产处置项目合作机构，征集评估、拍卖、咨询等协同服务资源。", "", "", "", "published", 90, "招商"),
-        ("产权交易及拍卖标的信息发布合作需求征集", "investment", "2026-04-02", "围绕产权交易和拍卖标的信息发布开展合作需求征集。", "", "", "", "published", 80, "合作"),
+        ("资产处置项目合作机构征集：评估、拍卖、咨询协同服务", "investment", "2026-04-15", "面向资产处置项目合作机构，征集评估、拍卖、咨询等协同服务资源。", "", "", "", "published", 90, "其他"),
+        ("产权交易及拍卖标的信息发布合作需求征集", "investment", "2026-04-02", "围绕产权交易和拍卖标的信息发布开展合作需求征集。", "", "", "", "published", 80, "产权"),
         ("济泰高速公路泰安段地上附着物和构筑物评估", "case", "2026-03-18", "围绕重点工程建设过程中的地上附着物、构筑物等价值判断事项，提供第三方评估支持。", "", "", "", "published", 70, "交通工程"),
         ("济泰高速公路“三改”工程评估", "case", "2026-03-12", "结合项目资料和现场情况，对相关资产及补偿事项进行评估，为工程实施提供参考依据。", "", "", "", "published", 60, "工程评估"),
         ("泰安环山路东延工程评估", "case", "2026-03-06", "在城市道路建设与改扩建过程中，参与相关资产价值评估工作。", "", "", "", "published", 50, "城市建设"),
@@ -468,7 +469,7 @@ class CMSHandler(SimpleHTTPRequestHandler):
                 continue
             body = body.rsplit(b"\r\n", 1)[0]
             filename = self.extract_filename(header.decode("utf-8", errors="ignore"))
-            suffix = Path(filename).suffix.lower()
+            suffix = Path(filename).suffix.lower() or self.detect_image_suffix(body)
             if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
                 self.error_json(400, "仅支持 jpg、png、webp、gif 图片")
                 return
@@ -480,11 +481,26 @@ class CMSHandler(SimpleHTTPRequestHandler):
         self.error_json(400, "未找到上传文件")
 
     def extract_filename(self, header: str) -> str:
-        for segment in header.split(";"):
-            segment = segment.strip()
-            if segment.startswith("filename="):
-                return segment.split("=", 1)[1].strip().strip('"') or "upload.jpg"
+        match = re.search(r'filename="([^"]+)"', header)
+        if match:
+            return match.group(1) or "upload.jpg"
+
+        match = re.search(r"filename=([^\r\n;]+)", header)
+        if match:
+            return match.group(1).strip() or "upload.jpg"
+
         return "upload.jpg"
+
+    def detect_image_suffix(self, data: bytes) -> str:
+        if data.startswith(b"\xff\xd8\xff"):
+            return ".jpg"
+        if data.startswith(b"\x89PNG\r\n\x1a\n"):
+            return ".png"
+        if data.startswith(b"GIF87a") or data.startswith(b"GIF89a"):
+            return ".gif"
+        if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
+            return ".webp"
+        return ""
 
     def article_id_from_path(self, path: str) -> int | None:
         try:

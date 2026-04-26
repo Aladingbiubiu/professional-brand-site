@@ -107,8 +107,70 @@
             font: inherit;
         }
 
+        .field-note {
+            margin: -2px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 400;
+        }
+
         .admin-form textarea {
             resize: vertical;
+        }
+
+        .rich-editor-wrap {
+            display: grid;
+            gap: 10px;
+        }
+
+        .rich-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px;
+            background: #f7f9fd;
+            border: 1px solid var(--line);
+        }
+
+        .rich-toolbar button,
+        .rich-toolbar select {
+            min-height: 36px;
+            padding: 7px 10px;
+            color: var(--navy);
+            background: #fff;
+            border: 1px solid var(--line);
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+        }
+
+        .rich-toolbar button:hover {
+            border-color: var(--gold);
+        }
+
+        .rich-editor {
+            min-height: 360px;
+            padding: 22px;
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line);
+            outline: none;
+            line-height: 1.85;
+        }
+
+        .rich-editor:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(213, 164, 90, 0.16);
+        }
+
+        .rich-editor p {
+            margin: 0 0 16px;
+        }
+
+        .rich-editor img {
+            max-width: 100%;
+            height: auto;
+            margin: 14px 0;
         }
 
         .admin-actions {
@@ -184,6 +246,31 @@
 
         .admin-message.error {
             color: #9f2f2f;
+        }
+
+        .cover-preview {
+            display: none;
+            grid-column: 1 / -1;
+            gap: 10px;
+            padding: 12px;
+            background: #f7f9fd;
+            border: 1px solid var(--line);
+        }
+
+        .cover-preview.show {
+            display: grid;
+        }
+
+        .cover-preview img {
+            width: min(360px, 100%);
+            max-height: 180px;
+            object-fit: cover;
+            border: 1px solid var(--line);
+        }
+
+        .cover-preview code {
+            color: var(--navy);
+            word-break: break-all;
         }
 
         .hidden {
@@ -267,6 +354,15 @@
                         <option value="case">项目案例</option>
                         <option value="wechat">公众号文章</option>
                     </select>
+                    <select id="tagFilter">
+                        <option value="">全部细分/标签</option>
+                        <option value="房地产">房地产</option>
+                        <option value="车辆">车辆</option>
+                        <option value="物资设备">物资设备</option>
+                        <option value="产权">产权</option>
+                        <option value="租赁权">租赁权</option>
+                        <option value="其他">其他</option>
+                    </select>
                     <select id="statusFilter">
                         <option value="">全部状态</option>
                         <option value="draft">草稿</option>
@@ -277,7 +373,7 @@
                 </div>
                 <table class="article-table">
                     <thead>
-                        <tr><th>标题</th><th>栏目</th><th>状态</th><th>日期</th><th>操作</th></tr>
+                        <tr><th>标题</th><th>栏目</th><th>细分/标签</th><th>状态</th><th>日期</th><th>操作</th></tr>
                     </thead>
                     <tbody id="articleRows"></tbody>
                 </table>
@@ -305,12 +401,56 @@
                     </label>
                     <label>发布日期<input name="published_at" type="date" required></label>
                     <label>排序值<input name="sort_order" type="number" value="0"></label>
-                    <label>标签<input name="tag" type="text" placeholder="公告 / 招商 / 交通工程"></label>
+                    <label>细分类型 / 标签
+                        <input name="tag" type="text" list="tagSuggestions" placeholder="房地产 / 车辆 / 物资设备 / 交通工程">
+                        <span id="tagHelp" class="field-note">招商信息建议填写：房地产、车辆、物资设备、产权、租赁权、其他。</span>
+                    </label>
+                    <datalist id="tagSuggestions">
+                        <option value="房地产"></option>
+                        <option value="车辆"></option>
+                        <option value="物资设备"></option>
+                        <option value="产权"></option>
+                        <option value="租赁权"></option>
+                        <option value="其他"></option>
+                        <option value="交通工程"></option>
+                        <option value="工程评估"></option>
+                        <option value="征迁服务"></option>
+                        <option value="专业观察"></option>
+                    </datalist>
                     <label>外链<input name="external_url" type="url" placeholder="公众号文章可填写链接"></label>
                     <label class="full">摘要<textarea name="summary" rows="3"></textarea></label>
-                    <label class="full">正文<textarea name="body" rows="8" placeholder="站内文章正文，可留空"></textarea></label>
+                    <div class="full rich-editor-wrap">
+                        <strong>正文</strong>
+                        <textarea name="body" class="hidden" rows="8"></textarea>
+                        <div class="rich-toolbar" aria-label="正文编辑工具栏">
+                            <select id="fontSizeSelect" aria-label="字号">
+                                <option value="">字号</option>
+                                <option value="14px">小字</option>
+                                <option value="16px">正文</option>
+                                <option value="18px">较大</option>
+                                <option value="22px">小标题</option>
+                                <option value="28px">大标题</option>
+                            </select>
+                            <button type="button" data-command="bold">加粗</button>
+                            <button type="button" data-command="italic">斜体</button>
+                            <button type="button" data-command="insertUnorderedList">项目符号</button>
+                            <button type="button" data-command="insertOrderedList">编号</button>
+                            <button type="button" data-command="justifyLeft">左对齐</button>
+                            <button type="button" data-command="justifyCenter">居中</button>
+                            <button type="button" data-command="justifyRight">右对齐</button>
+                            <button id="bodyImageBtn" type="button">插入图片</button>
+                            <button type="button" data-command="removeFormat">清除格式</button>
+                        </div>
+                        <div id="bodyEditor" class="rich-editor" contenteditable="true" aria-label="正文内容编辑区"></div>
+                        <input id="bodyImageUpload" class="hidden" type="file" accept="image/*">
+                        <span class="field-note">可直接输入文字，选中文字后设置字号或加粗；点击“插入图片”可把图片排进正文。</span>
+                    </div>
                     <label>封面图路径<input name="cover_image" type="text" placeholder="uploads/example.jpg"></label>
                     <label>上传封面<input id="coverUpload" type="file" accept="image/*"></label>
+                    <div id="coverPreview" class="cover-preview">
+                        <img alt="封面图预览">
+                        <code></code>
+                    </div>
                     <div class="admin-actions full">
                         <button class="admin-btn" type="submit">保存</button>
                         <button id="previewBtn" class="admin-btn light" type="button">预览</button>

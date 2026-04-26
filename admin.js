@@ -6,6 +6,8 @@ const categoryLabels = {
     wechat: "公众号文章",
 };
 
+const investmentTags = ["房地产", "车辆", "物资设备", "产权", "租赁权", "其他"];
+
 const statusLabels = {
     draft: "草稿",
     published: "已发布",
@@ -54,6 +56,66 @@ function showMessage(element, text, isError = false) {
     element.classList.toggle("error", isError);
 }
 
+function updateCoverPreview(path) {
+    const preview = document.querySelector("#coverPreview");
+    const image = preview.querySelector("img");
+    const code = preview.querySelector("code");
+
+    if (!path) {
+        preview.classList.remove("show");
+        image.removeAttribute("src");
+        code.textContent = "";
+        return;
+    }
+
+    image.src = path;
+    code.textContent = path;
+    preview.classList.add("show");
+}
+
+function looksLikeHtml(value) {
+    return /<\/?[a-z][\s\S]*>/i.test(value || "");
+}
+
+function textToHtml(value) {
+    return String(value || "")
+        .split(/\n+/)
+        .filter(Boolean)
+        .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+        .join("");
+}
+
+function editor() {
+    return document.querySelector("#bodyEditor");
+}
+
+function syncEditorToTextarea() {
+    const form = document.querySelector("#articleForm");
+    form.elements.body.value = editor().innerHTML.trim();
+}
+
+function setEditorContent(value) {
+    editor().innerHTML = looksLikeHtml(value) ? value : textToHtml(value);
+    syncEditorToTextarea();
+}
+
+async function uploadImageFile(file) {
+    const data = new FormData();
+    data.append("file", file);
+    const response = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: data,
+        credentials: "same-origin",
+    });
+    const payload = await response.json();
+
+    if (!response.ok || payload.ok === false) {
+        throw new Error(payload.message || "上传失败");
+    }
+
+    return payload.path;
+}
+
 function switchView(view) {
     state.currentView = view;
     Object.entries(panels).forEach(([name, panel]) => {
@@ -92,6 +154,7 @@ async function checkLogin() {
 
 async function loadArticles() {
     const category = document.querySelector("#categoryFilter").value;
+    const tag = document.querySelector("#tagFilter").value;
     const status = document.querySelector("#statusFilter").value;
     const params = new URLSearchParams();
     if (category) {
@@ -101,7 +164,7 @@ async function loadArticles() {
         params.set("status", status);
     }
     const data = await request(`/api/admin/articles?${params.toString()}`);
-    state.articles = data.articles;
+    state.articles = tag ? data.articles.filter((article) => article.tag === tag) : data.articles;
     renderRows();
     renderDashboard();
 }
@@ -112,6 +175,7 @@ function renderRows() {
         <tr>
             <td>${escapeHtml(article.title)}</td>
             <td>${categoryLabels[article.category] || article.category}</td>
+            <td>${escapeHtml(article.tag || "-")}</td>
             <td><span class="status-pill">${statusLabels[article.status] || article.status}</span></td>
             <td>${formatDate(article.published_at)}</td>
             <td>
@@ -120,6 +184,29 @@ function renderRows() {
             </td>
         </tr>
     `).join("");
+}
+
+function updateTagHelp() {
+    const form = document.querySelector("#articleForm");
+    const tagInput = form.elements.tag;
+    const help = document.querySelector("#tagHelp");
+    const isInvestment = form.elements.category.value === "investment";
+
+    if (isInvestment) {
+        tagInput.placeholder = "房地产 / 车辆 / 物资设备 / 产权 / 租赁权 / 其他";
+        help.textContent = "招商信息会按这里填写的细分类型在前台左侧菜单中筛选。";
+        return;
+    }
+
+    tagInput.placeholder = "公告 / 交通工程 / 专业观察 / 房产推介";
+    help.textContent = "非招商栏目可填写普通标签，用于列表和详情页展示。";
+}
+
+function normalizeInvestmentTag(payload) {
+    if (payload.category === "investment" && !investmentTags.includes(payload.tag)) {
+        payload.tag = payload.tag || "其他";
+    }
+    return payload;
 }
 
 function renderDashboard() {
@@ -131,12 +218,13 @@ function renderDashboard() {
     }
     list.innerHTML = `
         <table class="article-table">
-            <thead><tr><th>标题</th><th>栏目</th><th>状态</th><th>日期</th></tr></thead>
+            <thead><tr><th>标题</th><th>栏目</th><th>细分/标签</th><th>状态</th><th>日期</th></tr></thead>
             <tbody>
                 ${latest.map((article) => `
                     <tr>
                         <td>${escapeHtml(article.title)}</td>
                         <td>${categoryLabels[article.category] || article.category}</td>
+                        <td>${escapeHtml(article.tag || "-")}</td>
                         <td><span class="status-pill">${statusLabels[article.status] || article.status}</span></td>
                         <td>${formatDate(article.published_at)}</td>
                     </tr>
@@ -158,15 +246,18 @@ function fillForm(article = null) {
     form.elements.tag.value = article?.tag || "";
     form.elements.external_url.value = article?.external_url || "";
     form.elements.summary.value = article?.summary || "";
-    form.elements.body.value = article?.body || "";
+    setEditorContent(article?.body || "");
     form.elements.cover_image.value = article?.cover_image || "";
+    updateTagHelp();
+    updateCoverPreview(form.elements.cover_image.value);
     showMessage(document.querySelector("#editorMessage"), "");
     switchView("editor");
 }
 
 function formPayload() {
     const form = document.querySelector("#articleForm");
-    return {
+    syncEditorToTextarea();
+    return normalizeInvestmentTag({
         title: form.elements.title.value,
         category: form.elements.category.value,
         status: form.elements.status.value,
@@ -177,7 +268,7 @@ function formPayload() {
         summary: form.elements.summary.value,
         body: form.elements.body.value,
         cover_image: form.elements.cover_image.value,
-    };
+    });
 }
 
 function previewCurrent() {
@@ -236,10 +327,42 @@ document.querySelectorAll(".admin-nav button").forEach((button) => {
 });
 
 document.querySelector("#categoryFilter").addEventListener("change", loadArticles);
+document.querySelector("#tagFilter").addEventListener("change", loadArticles);
 document.querySelector("#statusFilter").addEventListener("change", loadArticles);
 document.querySelector("#newArticleBtn").addEventListener("click", () => fillForm());
 document.querySelector("#clearFormBtn").addEventListener("click", () => fillForm());
 document.querySelector("#previewBtn").addEventListener("click", previewCurrent);
+document.querySelector("#articleForm").elements.category.addEventListener("change", updateTagHelp);
+editor().addEventListener("input", syncEditorToTextarea);
+
+document.querySelectorAll("[data-command]").forEach((button) => {
+    button.addEventListener("click", () => {
+        editor().focus();
+        document.execCommand(button.dataset.command, false, null);
+        syncEditorToTextarea();
+    });
+});
+
+document.querySelector("#fontSizeSelect").addEventListener("change", (event) => {
+    const size = event.target.value;
+    if (!size) {
+        return;
+    }
+    editor().focus();
+    document.execCommand("fontSize", false, "4");
+    editor().querySelectorAll("font[size='4']").forEach((node) => {
+        const span = document.createElement("span");
+        span.style.fontSize = size;
+        span.innerHTML = node.innerHTML;
+        node.replaceWith(span);
+    });
+    event.target.value = "";
+    syncEditorToTextarea();
+});
+
+document.querySelector("#bodyImageBtn").addEventListener("click", () => {
+    document.querySelector("#bodyImageUpload").click();
+});
 
 document.querySelector("#articleRows").addEventListener("click", async (event) => {
     const editId = event.target.dataset.edit;
@@ -278,8 +401,11 @@ document.querySelector("#coverUpload").addEventListener("change", async (event) 
         return;
     }
     const message = document.querySelector("#editorMessage");
+    const uploadInput = event.currentTarget;
     const data = new FormData();
     data.append("file", file);
+    uploadInput.disabled = true;
+    showMessage(message, "封面图上传中，请稍候...");
     try {
         const response = await fetch("/api/admin/upload", {
             method: "POST",
@@ -291,10 +417,41 @@ document.querySelector("#coverUpload").addEventListener("change", async (event) 
             throw new Error(payload.message || "上传失败");
         }
         document.querySelector("#articleForm").elements.cover_image.value = payload.path;
-        showMessage(message, "封面图已上传。");
+        updateCoverPreview(payload.path);
+        showMessage(message, `封面图已上传：${payload.path}`);
     } catch (error) {
         showMessage(message, error.message, true);
+    } finally {
+        uploadInput.disabled = false;
+        uploadInput.value = "";
     }
+});
+
+document.querySelector("#bodyImageUpload").addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+    const message = document.querySelector("#editorMessage");
+    const input = event.currentTarget;
+    input.disabled = true;
+    showMessage(message, "正文图片上传中，请稍候...");
+    try {
+        const path = await uploadImageFile(file);
+        editor().focus();
+        document.execCommand("insertHTML", false, `<p><img src="${escapeHtml(path)}" alt=""></p>`);
+        syncEditorToTextarea();
+        showMessage(message, "正文图片已插入。");
+    } catch (error) {
+        showMessage(message, error.message, true);
+    } finally {
+        input.disabled = false;
+        input.value = "";
+    }
+});
+
+document.querySelector("#articleForm").elements.cover_image.addEventListener("input", (event) => {
+    updateCoverPreview(event.target.value);
 });
 
 document.querySelector("#passwordForm").addEventListener("submit", async (event) => {
