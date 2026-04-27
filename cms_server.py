@@ -21,7 +21,7 @@ UPLOAD_DIR = ROOT / "uploads"
 DB_PATH = DATA_DIR / "content.db"
 SESSION_SECONDS = 60 * 60 * 8
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
-CATEGORIES = {"auction", "industry", "investment", "case", "wechat"}
+CATEGORIES = {"auction", "industry", "investment", "case", "law", "wechat"}
 STATUSES = {"draft", "published", "archived"}
 
 
@@ -31,6 +31,15 @@ def now_iso() -> str:
 
 def json_bytes(payload: object) -> bytes:
     return json.dumps(payload, ensure_ascii=False).encode("utf-8")
+
+
+def positive_int(value: str, default: int, maximum: int | None = None) -> int:
+    try:
+        parsed = int(value or default)
+    except (TypeError, ValueError):
+        parsed = default
+    parsed = max(parsed, 1)
+    return min(parsed, maximum) if maximum else parsed
 
 
 def hash_password(password: str, salt: str | None = None) -> str:
@@ -281,26 +290,53 @@ class CMSHandler(SimpleHTTPRequestHandler):
         qs = parse_qs(parsed.query)
         category = qs.get("category", [""])[0]
         status = qs.get("status", ["published"])[0]
-        limit = min(int(qs.get("limit", ["50"])[0] or "50"), 100)
+        limit = positive_int(qs.get("limit", ["50"])[0], 50, 100)
+        page_size = positive_int(qs.get("page_size", [str(limit)])[0], limit, 100)
+        page = positive_int(qs.get("page", ["1"])[0], 1)
+        tag = qs.get("tag", [""])[0]
+        exclude_category = qs.get("exclude_category", [""])[0]
+        offset = (page - 1) * page_size
 
         where = ["status = ?"]
         values: list[object] = [status]
         if category:
             where.append("category = ?")
             values.append(category)
+        if category == "investment" and tag == "其他":
+            where.append("(tag = ? or tag not in (?, ?, ?, ?, ?, ?))")
+            values.extend(["其他", "房地产", "车辆", "物资设备", "产权", "租赁权", "其他"])
+        elif tag:
+            where.append("tag = ?")
+            values.append(tag)
+        if exclude_category:
+            where.append("category != ?")
+            values.append(exclude_category)
 
-        values.append(limit)
         with db() as conn:
+            total = conn.execute(
+                f"select count(*) from articles where {' and '.join(where)}",
+                values,
+            ).fetchone()[0]
+            total_pages = max((total + page_size - 1) // page_size, 1)
+            page = min(page, total_pages)
+            offset = (page - 1) * page_size
             rows = conn.execute(
                 f"""
                 select * from articles
                 where {' and '.join(where)}
                 order by date(published_at) desc, sort_order desc, id desc
-                limit ?
+                limit ? offset ?
                 """,
-                values,
+                [*values, page_size, offset],
             ).fetchall()
-        self.write_json({"ok": True, "articles": [article_row_to_dict(row) for row in rows]})
+        self.write_json({
+            "ok": True,
+            "articles": [article_row_to_dict(row) for row in rows],
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+        })
 
     def handle_public_article(self, path: str) -> None:
         article_id = self.article_id_from_path(path)

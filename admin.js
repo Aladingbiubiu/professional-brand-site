@@ -3,6 +3,7 @@ const categoryLabels = {
     industry: "行业动态",
     investment: "招商信息",
     case: "项目案例",
+    law: "法律法规",
     wechat: "公众号文章",
 };
 
@@ -100,6 +101,61 @@ function syncEditorToTextarea() {
 function setEditorContent(value) {
     editor().innerHTML = looksLikeHtml(value) ? value : textToHtml(value);
     syncEditorToTextarea();
+    updateToolbarState();
+}
+
+function applyInlineStyle(styles) {
+    editor().focus();
+    document.execCommand("fontSize", false, "4");
+    editor().querySelectorAll("font[size='4']").forEach((node) => {
+        const span = document.createElement("span");
+        Object.assign(span.style, styles);
+        span.innerHTML = node.innerHTML;
+        node.replaceWith(span);
+    });
+    syncEditorToTextarea();
+    updateToolbarState();
+}
+
+function currentBlock() {
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) {
+        return null;
+    }
+
+    let node = selection.anchorNode;
+    if (node && node.nodeType === Node.TEXT_NODE) {
+        node = node.parentElement;
+    }
+
+    while (node && node !== editor()) {
+        if (/^(P|DIV|LI|H2|H3|H4|BLOCKQUOTE)$/i.test(node.tagName)) {
+            return node;
+        }
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
+function applyBlockStyle(styles) {
+    editor().focus();
+    const block = currentBlock();
+    if (block) {
+        Object.assign(block.style, styles);
+    }
+    syncEditorToTextarea();
+    updateToolbarState();
+}
+
+function updateToolbarState() {
+    document.querySelectorAll("[data-command]").forEach((button) => {
+        const command = button.dataset.command;
+        if (!["bold", "italic", "underline", "justifyLeft", "justifyCenter", "justifyRight"].includes(command)) {
+            return;
+        }
+        button.classList.toggle("active", document.queryCommandState(command));
+    });
 }
 
 async function uploadImageFile(file) {
@@ -170,6 +226,19 @@ async function loadArticles() {
     state.articles = tag ? data.articles.filter((article) => article.tag === tag) : data.articles;
     renderRows();
     renderDashboard();
+}
+
+function updateTagFilterVisibility() {
+    const categoryFilter = document.querySelector("#categoryFilter");
+    const tagFilter = document.querySelector("#tagFilter");
+    const shouldShow = categoryFilter.value === "investment";
+
+    tagFilter.classList.toggle("hidden", !shouldShow);
+    tagFilter.disabled = !shouldShow;
+
+    if (!shouldShow) {
+        tagFilter.value = "";
+    }
 }
 
 function renderRows() {
@@ -329,20 +398,34 @@ document.querySelectorAll(".admin-nav button").forEach((button) => {
     });
 });
 
-document.querySelector("#categoryFilter").addEventListener("change", loadArticles);
+document.querySelector("#categoryFilter").addEventListener("change", () => {
+    updateTagFilterVisibility();
+    loadArticles();
+});
 document.querySelector("#tagFilter").addEventListener("change", loadArticles);
 document.querySelector("#statusFilter").addEventListener("change", loadArticles);
 document.querySelector("#newArticleBtn").addEventListener("click", () => fillForm());
 document.querySelector("#clearFormBtn").addEventListener("click", () => fillForm());
 document.querySelector("#previewBtn").addEventListener("click", previewCurrent);
 document.querySelector("#articleForm").elements.category.addEventListener("change", updateTagHelp);
-editor().addEventListener("input", syncEditorToTextarea);
+editor().addEventListener("input", () => {
+    syncEditorToTextarea();
+    updateToolbarState();
+});
+editor().addEventListener("keyup", updateToolbarState);
+editor().addEventListener("mouseup", updateToolbarState);
+document.addEventListener("selectionchange", () => {
+    if (document.activeElement === editor()) {
+        updateToolbarState();
+    }
+});
 
 document.querySelectorAll("[data-command]").forEach((button) => {
     button.addEventListener("click", () => {
         editor().focus();
         document.execCommand(button.dataset.command, false, null);
         syncEditorToTextarea();
+        updateToolbarState();
     });
 });
 
@@ -351,16 +434,33 @@ document.querySelector("#fontSizeSelect").addEventListener("change", (event) => 
     if (!size) {
         return;
     }
+    applyInlineStyle({ fontSize: size });
+    event.target.value = "";
+});
+
+document.querySelector("#lineHeightSelect").addEventListener("change", (event) => {
+    const lineHeight = event.target.value;
+    if (!lineHeight) {
+        return;
+    }
+    applyBlockStyle({ lineHeight });
+    event.target.value = "";
+});
+
+document.querySelector("#blockFormatSelect").addEventListener("change", (event) => {
+    const format = event.target.value;
+    if (!format) {
+        return;
+    }
     editor().focus();
-    document.execCommand("fontSize", false, "4");
-    editor().querySelectorAll("font[size='4']").forEach((node) => {
-        const span = document.createElement("span");
-        span.style.fontSize = size;
-        span.innerHTML = node.innerHTML;
-        node.replaceWith(span);
-    });
+    document.execCommand("formatBlock", false, format);
     event.target.value = "";
     syncEditorToTextarea();
+    updateToolbarState();
+});
+
+document.querySelector("#textColorInput").addEventListener("input", (event) => {
+    applyInlineStyle({ color: event.target.value });
 });
 
 document.querySelector("#bodyImageBtn").addEventListener("click", () => {
@@ -476,6 +576,7 @@ document.querySelector("#passwordForm").addEventListener("submit", async (event)
     }
 });
 
+updateTagFilterVisibility();
 checkLogin().catch(() => {
     adminView.classList.add("hidden");
     loginView.classList.remove("hidden");

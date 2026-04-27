@@ -99,16 +99,28 @@ const categoryNames = {
     industry: "行业动态",
     investment: "招商信息",
     case: "项目案例",
+    law: "法律法规",
     wechat: "微信公众号",
 };
 
 const filterTitles = {
-    all: "全部内容",
+    all: "新闻动态",
     auction: "拍卖公告",
     industry: "行业动态",
     investment: "招商信息",
     case: "项目案例",
+    law: "法律法规",
     wechat: "公众号文章",
+};
+
+const filterKickers = {
+    all: "News",
+    auction: "Auction Notices",
+    industry: "Industry Updates",
+    investment: "Investment Information",
+    case: "Project Cases",
+    law: "Laws & Regulations",
+    wechat: "WeChat Articles",
 };
 
 function escapeHtml(value) {
@@ -125,9 +137,46 @@ function looksLikeHtml(value) {
 }
 
 function sanitizeRichHtml(value) {
-    const allowedTags = new Set(["P", "BR", "STRONG", "B", "EM", "I", "UL", "OL", "LI", "IMG", "SPAN", "DIV", "H2", "H3", "H4", "A"]);
+    const allowedTags = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "UL", "OL", "LI", "IMG", "SPAN", "DIV", "H2", "H3", "H4", "BLOCKQUOTE", "A"]);
+    const allowedStyleProps = new Set([
+        "font-size",
+        "font-weight",
+        "font-style",
+        "text-align",
+        "text-indent",
+        "line-height",
+        "margin",
+        "margin-top",
+        "margin-right",
+        "margin-bottom",
+        "margin-left",
+        "padding",
+        "padding-top",
+        "padding-right",
+        "padding-bottom",
+        "padding-left",
+        "color",
+        "background-color",
+        "list-style-type",
+    ]);
     const template = document.createElement("template");
     template.innerHTML = value || "";
+
+    function sanitizeStyle(styleText) {
+        const safeRules = [];
+        styleText.split(";").forEach((rule) => {
+            const [rawProp, ...rawValue] = rule.split(":");
+            const prop = (rawProp || "").trim().toLowerCase();
+            const val = rawValue.join(":").trim();
+
+            if (!allowedStyleProps.has(prop) || !val || /url\s*\(|expression\s*\(|javascript:/i.test(val)) {
+                return;
+            }
+
+            safeRules.push(`${prop}: ${val}`);
+        });
+        return safeRules.join("; ");
+    }
 
     function cleanNode(node) {
         Array.from(node.childNodes).forEach((child) => {
@@ -144,9 +193,14 @@ function sanitizeRichHtml(value) {
                 const val = attribute.value;
                 const isSafeImage = child.tagName === "IMG" && ["src", "alt"].includes(name) && !/^javascript:/i.test(val);
                 const isSafeLink = child.tagName === "A" && ["href", "target", "rel"].includes(name) && !/^javascript:/i.test(val);
-                const isSafeStyle = name === "style" && /^(font-size:\s*(14|16|18|22|28)px;?\s*|text-align:\s*(left|center|right);?\s*)+$/i.test(val);
+                const safeStyle = name === "style" ? sanitizeStyle(val) : "";
 
-                if (!isSafeImage && !isSafeLink && !isSafeStyle) {
+                if (safeStyle) {
+                    child.setAttribute("style", safeStyle);
+                    return;
+                }
+
+                if (!isSafeImage && !isSafeLink) {
                     child.removeAttribute(attribute.name);
                 }
             });
@@ -217,6 +271,7 @@ async function hydrateNoticeBoard() {
 
         if (category === "investment") {
             setupInvestmentTabs(column, data.articles);
+            return;
         }
 
         renderNoticeFeed(column, data.articles, category);
@@ -226,19 +281,85 @@ async function hydrateNoticeBoard() {
 function setupInvestmentTabs(column, articles) {
     const tabs = Array.from(column.querySelectorAll("[data-investment-tag]"));
     const fixedTags = new Set(investmentTags);
+    let activeTabIndex = 0;
+    let tabTimer;
+
+    function articlesForTag(tag) {
+        if (tag === "其他") {
+            return articles.filter((article) => article.tag === "其他" || !fixedTags.has(article.tag));
+        }
+
+        return articles.filter((article) => article.tag === tag);
+    }
+
+    function activateTab(tab, shouldScroll = false) {
+        const tag = tab.dataset.investmentTag || "";
+        const filtered = articlesForTag(tag);
+        activeTabIndex = tabs.indexOf(tab);
+        tabs.forEach((item) => item.classList.toggle("active", item === tab));
+        renderNoticeFeed(column, filtered, "investment", { emptyLabel: tag });
+
+        if (shouldScroll) {
+            column.querySelector(".notice-column-body")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+    }
+
+    const tabsWithContent = tabs.filter((tab) => articlesForTag(tab.dataset.investmentTag || "").length > 0);
+    const rotatingTabs = tabsWithContent.length ? tabsWithContent : tabs;
+
+    function startTabTimer() {
+        window.clearInterval(tabTimer);
+
+        if (rotatingTabs.length < 2) {
+            return;
+        }
+
+        tabTimer = window.setInterval(() => {
+            const currentRotatingIndex = rotatingTabs.indexOf(tabs[activeTabIndex]);
+            const nextIndex = currentRotatingIndex >= 0 ? currentRotatingIndex + 1 : 0;
+            activateTab(rotatingTabs[nextIndex % rotatingTabs.length], false);
+        }, 4200);
+    }
 
     tabs.forEach((tab) => {
         tab.addEventListener("click", (event) => {
             event.preventDefault();
-            const tag = tab.dataset.investmentTag || "";
-            const filtered = tag === "其他"
-                ? articles.filter((article) => article.tag === "其他" || !fixedTags.has(article.tag))
-                : articles.filter((article) => article.tag === tag);
-            tabs.forEach((item) => item.classList.toggle("active", item === tab));
-            renderNoticeFeed(column, filtered, "investment", { emptyLabel: tag });
-            column.querySelector(".notice-column-body")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            activateTab(tab, true);
+            startTabTimer();
         });
     });
+
+    column.addEventListener("mouseenter", () => window.clearInterval(tabTimer));
+    column.addEventListener("mouseleave", startTabTimer);
+
+    activateTab(rotatingTabs[0], false);
+    startTabTimer();
+}
+
+async function hydrateListFeeds() {
+    const feeds = Array.from(document.querySelectorAll("[data-list-feed]"));
+
+    if (!feeds.length) {
+        return;
+    }
+
+    await Promise.all(feeds.map(async (feed) => {
+        const category = feed.dataset.listFeed;
+        const data = await fetchArticles({ category, limit: "5" });
+        const list = feed.querySelector(".compact-list");
+
+        if (!data.articles.length) {
+            list.innerHTML = '<p class="notice-empty">暂无已发布内容</p>';
+            return;
+        }
+
+        list.innerHTML = data.articles.map((article) => `
+            <a class="compact-item" href="${escapeHtml(articleUrl(article))}"${articleTarget(article)}>
+                <strong>${escapeHtml(article.title)}</strong>
+                <time>${escapeHtml(formatDate(article.published_at))}</time>
+            </a>
+        `).join("");
+    }));
 }
 
 function renderNoticeFeed(column, articles, category, options = {}) {
@@ -280,9 +401,9 @@ async function hydrateNewsShowcase() {
     }
 
     const groups = await Promise.all([
+        fetchArticles({ category: "auction", limit: "4" }),
+        fetchArticles({ category: "investment", limit: "4" }),
         fetchArticles({ category: "industry", limit: "4" }),
-        fetchArticles({ category: "case", limit: "4" }),
-        fetchArticles({ category: "wechat", limit: "4" }),
     ]);
     const articles = groups
         .flatMap((group) => group.articles || [])
@@ -371,23 +492,32 @@ async function hydrateArticleList() {
     const params = new URLSearchParams(window.location.search);
     const category = params.get("category") || "";
     const tag = params.get("tag") || "";
-    const requestParams = { limit: "50" };
+    const page = Math.max(parseInt(params.get("page") || "1", 10) || 1, 1);
+    const pageSize = 10;
+    const requestParams = { page: String(page), page_size: String(pageSize) };
 
     if (category) {
         requestParams.category = category;
+    } else {
+        requestParams.exclude_category = "wechat";
+    }
+
+    if (tag) {
+        requestParams.tag = tag;
     }
 
     const data = await fetchArticles(requestParams);
-    const articles = tag
-        ? data.articles.filter((article) => article.tag === tag)
-        : data.articles;
+    const articles = data.articles;
     const title = document.querySelector("#articleListTitle");
+    const kicker = document.querySelector("#articleListKicker");
     const count = document.querySelector("#articleListCount");
     const activeHref = `${window.location.pathname.split("/").pop() || "insights.html"}${window.location.search}`;
 
     document.querySelectorAll("[data-filter-link]").forEach((link) => {
         const linkUrl = new URL(link.getAttribute("href"), window.location.href);
         const currentUrl = new URL(activeHref, window.location.href);
+        linkUrl.searchParams.delete("page");
+        currentUrl.searchParams.delete("page");
         link.classList.toggle("active", linkUrl.search === currentUrl.search);
     });
 
@@ -395,25 +525,83 @@ async function hydrateArticleList() {
         title.textContent = tag || filterTitles[category] || filterTitles.all;
     }
 
+    if (kicker) {
+        kicker.textContent = filterKickers[category] || filterKickers.all;
+    }
+
     if (count) {
-        count.textContent = articles.length ? `共 ${articles.length} 条内容` : "暂无匹配内容";
+        count.textContent = data.total ? `共 ${data.total} 条内容，第 ${data.page} / ${data.total_pages} 页` : "暂无匹配内容";
+    }
+
+    let pager = document.querySelector("[data-article-pagination]");
+    if (!pager) {
+        pager = document.createElement("nav");
+        pager.className = "article-pagination";
+        pager.setAttribute("data-article-pagination", "");
+        pager.setAttribute("aria-label", "内容分页");
+        list.insertAdjacentElement("afterend", pager);
     }
 
     if (!articles.length) {
         list.classList.add("empty");
         list.textContent = "暂无已发布内容。";
+        renderArticlePagination(pager, data.page || 1, data.total_pages || 1);
         return;
     }
 
     list.classList.remove("empty");
-    list.innerHTML = articles.map((article) => `
+    list.innerHTML = articles.map((article) => {
+        const subMeta = category
+            ? formatDate(article.published_at)
+            : (article.tag || formatDate(article.published_at));
+
+        return `
         <article>
-            <time>${escapeHtml(categoryNames[article.category] || "动态")}</time>
             <h2><a href="${escapeHtml(articleUrl(article))}"${articleTarget(article)}>${escapeHtml(article.title)}</a></h2>
             <p>${escapeHtml(article.summary || "更多内容请查看详情。")}</p>
-            <span>${escapeHtml(article.tag || categoryNames[article.category] || "动态")}</span>
+            <span>${escapeHtml(subMeta)}</span>
         </article>
-    `).join("");
+    `;
+    }).join("");
+    renderArticlePagination(pager, data.page, data.total_pages);
+}
+
+function pageUrl(page) {
+    const url = new URL(window.location.href);
+    if (page <= 1) {
+        url.searchParams.delete("page");
+    } else {
+        url.searchParams.set("page", String(page));
+    }
+    return `${url.pathname.split("/").pop() || "insights.html"}${url.search}`;
+}
+
+function renderArticlePagination(pager, page, totalPages) {
+    const current = Math.max(page || 1, 1);
+    const total = Math.max(totalPages || 1, 1);
+
+    if (total <= 1) {
+        pager.innerHTML = "";
+        pager.classList.add("hidden");
+        return;
+    }
+
+    pager.classList.remove("hidden");
+    const start = Math.max(1, current - 2);
+    const end = Math.min(total, current + 2);
+    const pageLinks = [];
+
+    for (let pageNumber = start; pageNumber <= end; pageNumber += 1) {
+        pageLinks.push(`<a class="${pageNumber === current ? "active" : ""}" href="${escapeHtml(pageUrl(pageNumber))}">${pageNumber}</a>`);
+    }
+
+    pager.innerHTML = `
+        <a class="${current === 1 ? "disabled" : ""}" href="${escapeHtml(pageUrl(1))}">首页</a>
+        <a class="${current === 1 ? "disabled" : ""}" href="${escapeHtml(pageUrl(Math.max(1, current - 1)))}">上一页</a>
+        ${pageLinks.join("")}
+        <a class="${current === total ? "disabled" : ""}" href="${escapeHtml(pageUrl(Math.min(total, current + 1)))}">下一页</a>
+        <a class="${current === total ? "disabled" : ""}" href="${escapeHtml(pageUrl(total))}">末页</a>
+    `;
 }
 
 async function hydrateArticleDetail() {
@@ -443,6 +631,7 @@ async function hydrateArticleDetail() {
         const article = data.article;
         document.title = `${article.title} | 山东众信价格评估拍卖有限公司`;
         title.textContent = article.title;
+        document.querySelector("#articleContentTitle").textContent = article.title;
         document.querySelector("#articleCategory").textContent = categoryNames[article.category] || "News";
         document.querySelector("#articleSummary").textContent = article.summary || "";
         document.querySelector("#articleDate").textContent = formatDate(article.published_at);
@@ -466,6 +655,7 @@ async function hydrateArticleDetail() {
 }
 
 hydrateNoticeBoard().catch(() => {});
+hydrateListFeeds().catch(() => {});
 hydrateNewsShowcase().catch(() => {});
 hydrateArticleList().catch(() => {});
 hydrateArticleDetail().catch(() => {});
