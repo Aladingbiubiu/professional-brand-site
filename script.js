@@ -9,6 +9,7 @@ if (menuToggle && mainNav) {
 }
 
 const contactForm = document.querySelector(".contact-form");
+const investmentTags = ["房地产", "车辆", "物资设备", "产权", "租赁权", "其他"];
 
 if (contactForm) {
     contactForm.addEventListener("submit", (event) => {
@@ -206,7 +207,7 @@ async function hydrateNoticeBoard() {
 
     await Promise.all(columns.map(async (column) => {
         const category = column.dataset.noticeFeed;
-        const data = await fetchArticles({ category, limit: "5" });
+        const data = await fetchArticles({ category, limit: category === "investment" ? "50" : "5" });
         const body = column.querySelector(".notice-column-body");
 
         if (!data.articles.length) {
@@ -214,27 +215,61 @@ async function hydrateNoticeBoard() {
             return;
         }
 
-        const [featured, ...items] = data.articles;
-        const image = featured.cover_image || noticeFallbackImages[category] || noticeFallbackImages.industry;
-        body.innerHTML = `
-            <a class="notice-featured" href="${escapeHtml(articleUrl(featured))}"${articleTarget(featured)}>
-                <img src="${escapeHtml(image)}" alt="${escapeHtml(featured.title)}">
-                <div>
-                    <time>${formatDate(featured.published_at)}</time>
-                    <strong>${escapeHtml(featured.title)}</strong>
-                    <p>${escapeHtml(featured.summary || "更多内容请查看详情。")}</p>
-                </div>
-            </a>
-            <div class="notice-list">
-                ${items.map((article) => `
-                    <a class="notice-item" href="${escapeHtml(articleUrl(article))}"${articleTarget(article)}>
-                        <strong>${escapeHtml(article.title)}</strong>
-                        <time>${formatDate(article.published_at)}</time>
-                    </a>
-                `).join("")}
-            </div>
-        `;
+        if (category === "investment") {
+            setupInvestmentTabs(column, data.articles);
+        }
+
+        renderNoticeFeed(column, data.articles, category);
     }));
+}
+
+function setupInvestmentTabs(column, articles) {
+    const tabs = Array.from(column.querySelectorAll("[data-investment-tag]"));
+    const fixedTags = new Set(investmentTags);
+
+    tabs.forEach((tab) => {
+        tab.addEventListener("click", (event) => {
+            event.preventDefault();
+            const tag = tab.dataset.investmentTag || "";
+            const filtered = tag === "其他"
+                ? articles.filter((article) => article.tag === "其他" || !fixedTags.has(article.tag))
+                : articles.filter((article) => article.tag === tag);
+            tabs.forEach((item) => item.classList.toggle("active", item === tab));
+            renderNoticeFeed(column, filtered, "investment", { emptyLabel: tag });
+            column.querySelector(".notice-column-body")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        });
+    });
+}
+
+function renderNoticeFeed(column, articles, category, options = {}) {
+    const body = column.querySelector(".notice-column-body");
+
+    if (!articles.length) {
+        const emptyLabel = options.emptyLabel ? `“${options.emptyLabel}”分类暂无已发布内容` : "暂无已发布内容";
+        body.innerHTML = `<p class="notice-empty investment-empty">${escapeHtml(emptyLabel)}</p>`;
+        return;
+    }
+
+    const [featured, ...items] = articles;
+    const image = featured.cover_image || noticeFallbackImages[category] || noticeFallbackImages.industry;
+    body.innerHTML = `
+        <a class="notice-featured" href="${escapeHtml(articleUrl(featured))}"${articleTarget(featured)}>
+            <img src="${escapeHtml(image)}" alt="${escapeHtml(featured.title)}">
+            <div>
+                <time>${formatDate(featured.published_at)}</time>
+                <strong>${escapeHtml(featured.title)}</strong>
+                <p>${escapeHtml(featured.summary || "更多内容请查看详情。")}</p>
+            </div>
+        </a>
+        <div class="notice-list">
+            ${items.map((article) => `
+                <a class="notice-item" href="${escapeHtml(articleUrl(article))}"${articleTarget(article)}>
+                    <strong>${escapeHtml(article.title)}</strong>
+                    <time>${formatDate(article.published_at)}</time>
+                </a>
+            `).join("")}
+        </div>
+    `;
 }
 
 async function hydrateNewsShowcase() {

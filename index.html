@@ -91,12 +91,12 @@
                 </div>
 
                 <div class="notice-board secondary">
-                    <section class="notice-column" data-notice-feed="auction">
+                    <section class="notice-column auction-panel" data-notice-feed="auction">
                         <header class="notice-column-head">
                             <h3>拍卖公告</h3>
                             <a href="insights.html">+MORE</a>
                         </header>
-                        <div class="notice-column-body">
+                        <div class="notice-column-body auction-body">
                             <a class="notice-featured" href="insights.html">
                                 <img src="https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=760&q=80" alt="拍卖公告重点信息">
                                 <div>
@@ -114,12 +114,20 @@
                         </div>
                     </section>
 
-                    <section class="notice-column" data-notice-feed="investment">
+                    <section class="notice-column investment-panel" data-notice-feed="investment">
                         <header class="notice-column-head">
                             <h3>招商信息</h3>
+                            <nav class="investment-tabs" aria-label="招商信息分类">
+                                <a href="#investment-feed" data-investment-tag="房地产">房地产</a>
+                                <a href="#investment-feed" data-investment-tag="车辆">车辆</a>
+                                <a href="#investment-feed" data-investment-tag="物资设备">物资设备</a>
+                                <a href="#investment-feed" data-investment-tag="产权">产权</a>
+                                <a href="#investment-feed" data-investment-tag="租赁权">租赁权</a>
+                                <a href="#investment-feed" data-investment-tag="其他">其他</a>
+                            </nav>
                             <a href="insights.html">+MORE</a>
                         </header>
-                        <div class="notice-column-body">
+                        <div id="investment-feed" class="notice-column-body investment-body">
                             <a class="notice-featured" href="contact.html">
                                 <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=760&q=80" alt="招商信息重点项目">
                                 <div>
@@ -279,6 +287,6 @@
         <div class="footer-bottom">© 2026 山东众信价格评估拍卖有限公司 版权所有 | 备案号待提供</div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=20260427-investment-filter"></script>
 </body>
 </html>

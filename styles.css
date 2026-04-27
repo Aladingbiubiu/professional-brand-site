@@ -531,6 +531,49 @@ a {
     font-size: 12px;
 }
 
+.investment-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
+    margin-right: auto;
+    padding-left: 18px;
+}
+
+.investment-tabs a {
+    position: relative;
+    padding: 0 15px;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.investment-tabs a + a::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1px;
+    height: 14px;
+    background: var(--gold);
+    transform: translateY(-50%);
+}
+
+.investment-tabs a:hover,
+.investment-tabs a.active {
+    color: var(--gold);
+}
+
+.investment-tabs a.active::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    bottom: -16px;
+    height: 2px;
+    background: var(--gold);
+}
+
 .notice-column-body {
     display: grid;
     grid-template-columns: minmax(220px, 0.86fr) 1fr;
@@ -832,6 +875,37 @@ a {
 
 .notice-column a:hover strong {
     color: var(--gold);
+}
+
+.auction-panel,
+.investment-panel {
+    grid-column: 1 / -1;
+}
+
+.auction-panel .notice-column-head,
+.investment-panel .notice-column-head {
+    align-items: center;
+}
+
+.auction-body,
+.investment-body {
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+    gap: 24px;
+}
+
+.auction-body .notice-featured img,
+.investment-body .notice-featured img {
+    height: 190px;
+}
+
+.investment-empty {
+    grid-column: 1 / -1;
+    min-height: 220px;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    background: #f7f9fd;
+    border: 1px dashed var(--line);
 }
 
 .split {
@@ -1825,6 +1899,18 @@ textarea:focus {
     }
 
     .notice-column-body {
+        grid-template-columns: 1fr;
+    }
+
+    .investment-tabs {
+        order: 3;
+        width: 100%;
+        padding: 10px 14px 12px;
+        border-top: 1px solid var(--line);
+    }
+
+    .auction-body,
+    .investment-body {
         grid-template-columns: 1fr;
     }
 
