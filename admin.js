@@ -40,7 +40,10 @@ async function request(path, options = {}) {
         credentials: "same-origin",
         ...options,
     });
-    const data = await response.json();
+    const contentType = response.headers.get("Content-Type") || "";
+    const data = contentType.includes("application/json")
+        ? await response.json()
+        : { ok: false, message: `接口返回异常：HTTP ${response.status}` };
     if (!response.ok || data.ok === false) {
         throw new Error(data.message || "请求失败");
     }
