@@ -3,3 +3,5 @@ data/
 uploads/
 __pycache__/
 cms-server*.log
+cms-server*.out
+cms-server*.err

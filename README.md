@@ -32,3 +32,12 @@ python cms_server.py
 默认密码：`admin123`
 
 首次正式部署前请登录后台修改密码，或在首次启动前设置环境变量 `CMS_ADMIN_PASSWORD`。
+
+## 上线前清单
+
+- 将全站页脚的 `备案号待提供` 替换为正式 ICP 备案号。
+- 将 `assets/wechat-qr-placeholder.svg` 替换为正式公众号或微信二维码图片，并保持 `contact.html` 中的路径稳定。
+- 确认证照图片中的证号、统一社会信用代码等信息是否允许公开；如需保守展示，请先使用打码版本替换原图。
+- 部署 CMS 前修改后台密码，建议设置 `CMS_ADMIN_PASSWORD` 后首次初始化数据库；如数据库已生成，请在后台“账号设置”中修改。
+- 备份 `data/content.db` 与 `uploads/`，并在正式环境使用 HTTPS、反向代理和定期备份。
+- `data/`、`uploads/`、日志和缓存为运行数据，保持不提交到 Git。

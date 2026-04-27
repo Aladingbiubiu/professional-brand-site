@@ -281,6 +281,16 @@ a {
     font-size: 16px;
 }
 
+.credential-note {
+    max-width: 760px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    color: #6b4a1f !important;
+    background: #fff7e8;
+    border-left: 3px solid var(--gold);
+    font-size: 14px !important;
+}
+
 .image-card-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1465,34 +1475,25 @@ a {
 }
 
 .qr-box {
-    width: 132px;
-    height: 132px;
+    width: 156px;
     margin-top: 26px;
     display: grid;
-    place-items: center;
+    gap: 8px;
     color: var(--navy);
-    border: 8px solid #edf2fb;
-    background: repeating-linear-gradient(45deg, #fff, #fff 8px, #edf2fb 8px, #edf2fb 16px);
     text-align: center;
 }
 
-.qr-box span,
 .qr-box small {
-    grid-column: 1;
-    grid-row: 1;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
 }
 
-.qr-box span {
-    font-weight: 800;
-    font-size: 28px;
-    transform: translateY(-12px);
-}
-
-.qr-box small {
-    align-self: end;
-    margin-bottom: 14px;
+.qr-box img {
+    width: 156px;
+    height: 156px;
+    border: 1px solid var(--line);
     background: #fff;
-    padding: 0 6px;
 }
 
 .contact-form {

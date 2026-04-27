@@ -20,6 +20,7 @@ DATA_DIR = ROOT / "data"
 UPLOAD_DIR = ROOT / "uploads"
 DB_PATH = DATA_DIR / "content.db"
 SESSION_SECONDS = 60 * 60 * 8
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 CATEGORIES = {"auction", "industry", "investment", "case", "wechat"}
 STATUSES = {"draft", "published", "archived"}
 
@@ -459,6 +460,9 @@ class CMSHandler(SimpleHTTPRequestHandler):
             return
         boundary = content_type.split("boundary=", 1)[1].strip().strip('"').encode("utf-8")
         length = int(self.headers.get("Content-Length", "0"))
+        if length > MAX_UPLOAD_BYTES:
+            self.error_json(413, "图片大小不能超过 5MB")
+            return
         data = self.rfile.read(length)
         marker = b"--" + boundary
         for part in data.split(marker):
@@ -468,6 +472,9 @@ class CMSHandler(SimpleHTTPRequestHandler):
             if not body:
                 continue
             body = body.rsplit(b"\r\n", 1)[0]
+            if len(body) > MAX_UPLOAD_BYTES:
+                self.error_json(413, "图片大小不能超过 5MB")
+                return
             filename = self.extract_filename(header.decode("utf-8", errors="ignore"))
             suffix = Path(filename).suffix.lower() or self.detect_image_suffix(body)
             if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
@@ -516,6 +523,7 @@ def main() -> None:
     httpd = ThreadingHTTPServer(("127.0.0.1", port), CMSHandler)
     print(f"Zhongxin CMS running at http://127.0.0.1:{port}")
     print("Default admin: admin / admin123 (set CMS_ADMIN_PASSWORD before first run to change it)")
+    print("Production note: change the password, back up data/content.db and uploads/, and run behind HTTPS/reverse proxy.")
     httpd.serve_forever()
 
 

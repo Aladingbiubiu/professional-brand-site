@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="公众号二维码待提供">
+  <rect width="240" height="240" fill="#ffffff"/>
+  <rect x="12" y="12" width="216" height="216" fill="none" stroke="#08215d" stroke-width="8"/>
+  <rect x="34" y="34" width="52" height="52" fill="#08215d"/>
+  <rect x="154" y="34" width="52" height="52" fill="#08215d"/>
+  <rect x="34" y="154" width="52" height="52" fill="#08215d"/>
+  <rect x="48" y="48" width="24" height="24" fill="#d5a45a"/>
+  <rect x="168" y="48" width="24" height="24" fill="#d5a45a"/>
+  <rect x="48" y="168" width="24" height="24" fill="#d5a45a"/>
+  <path d="M105 106h20v20h-20zm30 0h14v14h-14zm-30 32h14v14h-14zm44 24h18v18h-18zm-22-2h12v28h-12zm40-48h22v14h-22zm-4 28h26v12h-26z" fill="#08215d"/>
+  <rect x="58" y="102" width="124" height="36" rx="18" fill="#ffffff"/>
+  <text x="120" y="125" text-anchor="middle" font-family="Arial, Microsoft YaHei, sans-serif" font-size="18" font-weight="700" fill="#08215d">二维码待提供</text>
+</svg>

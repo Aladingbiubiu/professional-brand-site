@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>内容管理后台 | 山东众信</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <style>
         body {
@@ -462,6 +464,7 @@
 
             <section id="settingsPanel" class="admin-card hidden">
                 <h3>修改密码</h3>
+                <p class="field-note">正式部署前请使用强密码；如本地数据库已经初始化，修改 CMS_ADMIN_PASSWORD 不会覆盖现有账号密码。</p>
                 <form id="passwordForm" class="password-form">
                     <label>原密码<input name="old_password" type="password" required></label>
                     <label>新密码<input name="new_password" type="password" required minlength="6"></label>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="山东众信">
+  <rect width="64" height="64" rx="10" fill="#08215d"/>
+  <rect x="10" y="10" width="44" height="44" rx="4" fill="none" stroke="#d5a45a" stroke-width="3"/>
+  <path d="M20 23h24v5H20zm0 13h24v5H20z" fill="#fff"/>
+  <path d="M18 47h28" stroke="#d5a45a" stroke-width="3" stroke-linecap="round"/>
+</svg>
