@@ -20,6 +20,11 @@ const state = {
     currentView: "dashboard",
 };
 
+const IMAGE_UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+const BODY_IMAGE_MAX_WIDTH = 1200;
+const COVER_IMAGE_MAX_WIDTH = 1400;
+const IMAGE_QUALITY = 0.86;
+
 const loginView = document.querySelector("#loginView");
 const adminView = document.querySelector("#adminView");
 const userInfo = document.querySelector("#userInfo");
@@ -158,9 +163,77 @@ function updateToolbarState() {
     });
 }
 
-async function uploadImageFile(file) {
+function fileFromBlob(blob, name = "pasted-image.jpg") {
+    return new File([blob], name, { type: blob.type || "image/jpeg" });
+}
+
+function imageBlobFromDataUrl(dataUrl) {
+    return fetch(dataUrl).then((response) => response.blob());
+}
+
+function loadImage(file) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const url = URL.createObjectURL(file);
+        image.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(image);
+        };
+        image.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("图片读取失败，请换一张图片重试"));
+        };
+        image.src = url;
+    });
+}
+
+async function normalizeImageFile(file, maxWidth = BODY_IMAGE_MAX_WIDTH) {
+    if (!file || !file.type.startsWith("image/")) {
+        return file;
+    }
+    if (file.type === "image/gif") {
+        return file;
+    }
+
+    const image = await loadImage(file);
+    const scale = Math.min(1, maxWidth / image.naturalWidth);
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0, width, height);
+
+    const blob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, "image/jpeg", IMAGE_QUALITY);
+    });
+
+    if (!blob) {
+        return file;
+    }
+
+    const normalized = fileFromBlob(blob, file.name.replace(/\.[^.]+$/, ".jpg"));
+    if (normalized.size <= IMAGE_UPLOAD_MAX_BYTES || normalized.size < file.size) {
+        return normalized;
+    }
+    return file;
+}
+
+function insertBodyImage(path) {
+    editor().focus();
+    document.execCommand("insertHTML", false, `<p><img src="${escapeHtml(path)}" alt=""></p>`);
+    syncEditorToTextarea();
+}
+
+async function uploadImageFile(file, options = {}) {
+    const normalized = await normalizeImageFile(file, options.maxWidth || BODY_IMAGE_MAX_WIDTH);
+    if (normalized.size > IMAGE_UPLOAD_MAX_BYTES) {
+        throw new Error("图片大小不能超过 5MB，请压缩后再上传");
+    }
     const data = new FormData();
-    data.append("file", file);
+    data.append("file", normalized);
     const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: data,
@@ -173,6 +246,58 @@ async function uploadImageFile(file) {
     }
 
     return payload.path;
+}
+
+async function uploadImageFromDataUrl(dataUrl, options = {}) {
+    const blob = await imageBlobFromDataUrl(dataUrl);
+    const file = fileFromBlob(blob);
+    return uploadImageFile(file, options);
+}
+
+function clipboardImageFiles(dataTransfer) {
+    const fromFiles = Array.from(dataTransfer?.files || []).filter((file) => file.type.startsWith("image/"));
+    const fromItems = Array.from(dataTransfer?.items || [])
+        .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter(Boolean);
+    return fromFiles.length ? fromFiles : fromItems;
+}
+
+async function uploadClipboardImages(dataTransfer, options = {}) {
+    const files = clipboardImageFiles(dataTransfer);
+    const paths = [];
+    for (const file of files) {
+        paths.push(await uploadImageFile(file, options));
+    }
+    return paths;
+}
+
+function normalizePastedHtml(html) {
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    template.content.querySelectorAll("img").forEach((image) => {
+        image.removeAttribute("width");
+        image.removeAttribute("height");
+        image.removeAttribute("style");
+        image.alt = image.alt || "";
+    });
+    return template.innerHTML;
+}
+
+async function replaceDataImages(root, options = {}) {
+    const images = Array.from(root.querySelectorAll("img[src^='data:image']"));
+    for (const image of images) {
+        const path = await uploadImageFromDataUrl(image.src, options);
+        image.src = path;
+        image.removeAttribute("width");
+        image.removeAttribute("height");
+        image.removeAttribute("style");
+    }
+    syncEditorToTextarea();
+}
+
+async function normalizeEditorImages() {
+    await replaceDataImages(editor(), { maxWidth: BODY_IMAGE_MAX_WIDTH });
 }
 
 function switchView(view) {
@@ -486,6 +611,8 @@ document.querySelector("#articleForm").addEventListener("submit", async (event) 
     const id = form.elements.id.value;
     const message = document.querySelector("#editorMessage");
     try {
+        showMessage(message, "正在整理正文图片，请稍候...");
+        await normalizeEditorImages();
         const saved = await request(id ? `/api/admin/articles/${id}` : "/api/admin/articles", {
             method: id ? "PUT" : "POST",
             body: JSON.stringify(formPayload()),
@@ -505,23 +632,13 @@ document.querySelector("#coverUpload").addEventListener("change", async (event) 
     }
     const message = document.querySelector("#editorMessage");
     const uploadInput = event.currentTarget;
-    const data = new FormData();
-    data.append("file", file);
     uploadInput.disabled = true;
     showMessage(message, "封面图上传中，请稍候...");
     try {
-        const response = await fetch("/api/admin/upload", {
-            method: "POST",
-            body: data,
-            credentials: "same-origin",
-        });
-        const payload = await response.json();
-        if (!response.ok || payload.ok === false) {
-            throw new Error(payload.message || "上传失败");
-        }
-        document.querySelector("#articleForm").elements.cover_image.value = payload.path;
-        updateCoverPreview(payload.path);
-        showMessage(message, `封面图已上传：${payload.path}`);
+        const path = await uploadImageFile(file, { maxWidth: COVER_IMAGE_MAX_WIDTH });
+        document.querySelector("#articleForm").elements.cover_image.value = path;
+        updateCoverPreview(path);
+        showMessage(message, `封面图已上传：${path}`);
     } catch (error) {
         showMessage(message, error.message, true);
     } finally {
@@ -541,9 +658,7 @@ document.querySelector("#bodyImageUpload").addEventListener("change", async (eve
     showMessage(message, "正文图片上传中，请稍候...");
     try {
         const path = await uploadImageFile(file);
-        editor().focus();
-        document.execCommand("insertHTML", false, `<p><img src="${escapeHtml(path)}" alt=""></p>`);
-        syncEditorToTextarea();
+        insertBodyImage(path);
         showMessage(message, "正文图片已插入。");
     } catch (error) {
         showMessage(message, error.message, true);
@@ -555,6 +670,85 @@ document.querySelector("#bodyImageUpload").addEventListener("change", async (eve
 
 document.querySelector("#articleForm").elements.cover_image.addEventListener("input", (event) => {
     updateCoverPreview(event.target.value);
+});
+
+editor().addEventListener("paste", async (event) => {
+    const clipboard = event.clipboardData;
+    if (!clipboard) {
+        return;
+    }
+
+    const message = document.querySelector("#editorMessage");
+    const imageFiles = clipboardImageFiles(clipboard);
+    const html = clipboard.getData("text/html");
+
+    if (imageFiles.length) {
+        event.preventDefault();
+        showMessage(message, "正在上传粘贴的图片，请稍候...");
+        try {
+            const paths = await uploadClipboardImages(clipboard, { maxWidth: BODY_IMAGE_MAX_WIDTH });
+            paths.forEach(insertBodyImage);
+            showMessage(message, "粘贴图片已上传并插入正文。");
+        } catch (error) {
+            showMessage(message, error.message, true);
+        }
+        return;
+    }
+
+    if (html && html.includes("data:image")) {
+        event.preventDefault();
+        showMessage(message, "正在处理粘贴内容里的图片，请稍候...");
+        try {
+            const template = document.createElement("template");
+            template.innerHTML = normalizePastedHtml(html);
+            await replaceDataImages(template.content, { maxWidth: BODY_IMAGE_MAX_WIDTH });
+            document.execCommand("insertHTML", false, template.innerHTML);
+            syncEditorToTextarea();
+            showMessage(message, "粘贴内容已整理完成。");
+        } catch (error) {
+            showMessage(message, error.message, true);
+        }
+        return;
+    }
+
+    if (html) {
+        event.preventDefault();
+        document.execCommand("insertHTML", false, normalizePastedHtml(html));
+        syncEditorToTextarea();
+    }
+});
+
+document.querySelector("#articleForm").elements.cover_image.addEventListener("paste", async (event) => {
+    const coverInput = event.currentTarget;
+    const clipboard = event.clipboardData;
+    if (!clipboard) {
+        return;
+    }
+    const imageFiles = clipboardImageFiles(clipboard);
+    const html = clipboard.getData("text/html");
+    const pastedImage = html ? new DOMParser().parseFromString(html, "text/html").querySelector("img") : null;
+    if (!imageFiles.length && !pastedImage) {
+        return;
+    }
+
+    event.preventDefault();
+    const message = document.querySelector("#editorMessage");
+    showMessage(message, "正在上传粘贴的封面图，请稍候...");
+    try {
+        let path = "";
+        if (imageFiles.length) {
+            path = await uploadImageFile(imageFiles[0], { maxWidth: COVER_IMAGE_MAX_WIDTH });
+        } else if (pastedImage.src.startsWith("data:image")) {
+            path = await uploadImageFromDataUrl(pastedImage.src, { maxWidth: COVER_IMAGE_MAX_WIDTH });
+        } else {
+            path = pastedImage.src;
+        }
+        coverInput.value = path;
+        updateCoverPreview(path);
+        showMessage(message, `封面图已上传：${path}`);
+    } catch (error) {
+        showMessage(message, error.message, true);
+    }
 });
 
 document.querySelector("#passwordForm").addEventListener("submit", async (event) => {

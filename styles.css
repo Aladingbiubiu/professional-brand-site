@@ -1638,7 +1638,8 @@ a {
 }
 
 .article-detail .rich-text img {
-    width: auto;
+    display: block;
+    width: min(100%, 720px);
     max-width: 100%;
     height: auto;
     margin: 22px auto;
