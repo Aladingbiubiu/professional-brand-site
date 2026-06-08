@@ -200,6 +200,13 @@ class CMSHandler(SimpleHTTPRequestHandler):
             return
         super().do_GET()
 
+    def do_HEAD(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path == "/sitemap.xml":
+            self.handle_sitemap(head_only=True)
+            return
+        super().do_HEAD()
+
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path == "/api/admin/login":
@@ -256,13 +263,14 @@ class CMSHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def write_text(self, body: str, content_type: str, status: int = 200) -> None:
+    def write_text(self, body: str, content_type: str, status: int = 200, head_only: bool = False) -> None:
         encoded = body.encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", f"{content_type}; charset=utf-8")
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
-        self.wfile.write(encoded)
+        if not head_only:
+            self.wfile.write(encoded)
 
     def error_json(self, status: int, message: str) -> None:
         self.write_json({"ok": False, "message": message}, status)
@@ -363,7 +371,7 @@ class CMSHandler(SimpleHTTPRequestHandler):
             return
         self.write_json({"ok": True, "article": article_row_to_dict(row)})
 
-    def handle_sitemap(self) -> None:
+    def handle_sitemap(self, head_only: bool = False) -> None:
         static_pages = [
             ("", "weekly", "1.0"),
             ("about.html", "monthly", "0.8"),
@@ -412,7 +420,7 @@ class CMSHandler(SimpleHTTPRequestHandler):
         body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         body += "\n".join(entries)
         body += "\n</urlset>\n"
-        self.write_text(body, "application/xml")
+        self.write_text(body, "application/xml", head_only=head_only)
 
     def handle_me(self) -> None:
         user = self.current_user()
