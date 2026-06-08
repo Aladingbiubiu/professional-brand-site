@@ -19,24 +19,32 @@
   - 价格拍卖邮箱：`zxpgpm@163.com`
   - 房地产评估邮箱：`sdtaxtzx@163.com`
   - 地址：`济南市历下区经十路11111号`
-- 备案号仍为占位：`鲁ICP备待补充`。
+- 正式备案号已更新：`鲁ICP备2026030121号-1`。
 - 联系页表单是前端模拟提交，不接后端。
 - 已新增轻量内容后台：`cms_server.py` 使用 Python 标准库 + SQLite，后台入口 `/admin`。首次创建数据库时默认账号为 `admin`，默认密码来自 `CMS_ADMIN_PASSWORD` 环境变量，未设置时为 `admin123`；正式部署前必须修改密码。
-- 首页信息区已改为“大图新闻动态 + 热门列表 + 拍卖公告/招商信息双栏”的结构，动态内容优先从 CMS 读取，接口失败时保留静态兜底。
-- `insights.html` 已改为“左侧分类菜单 + 右侧内容列表”。主栏目包括项目案例、拍卖公告、招商信息、行业动态、公众号文章；招商信息下设二级类型：房地产、车辆、物资设备、产权、租赁权、其他。
-- 后台正文编辑已升级为轻量富文本编辑器，支持字号、加粗、斜体、列表、对齐和正文插图；文章详情页会按富文本渲染。
+- 首页信息区已改为“大图新闻动态 + 热门列表 + 拍卖公告 + 招商信息 + 行业动态/法律法规”的结构，动态内容优先从 CMS 读取，接口失败时保留静态兜底。
+- 首页新闻动态轮播当前聚合 `拍卖公告`、`招商信息`、`行业动态` 三类内容。
+- 首页 `招商信息` 支持房地产、车辆、物资设备、产权、租赁权、其他几个细分标签自动轮动；点击标签仅在首页当前模块内切换。
+- 首页 `+MORE` 已分别指向案例与动态页对应栏目：拍卖公告、招商信息、行业动态、法律法规。
+- `index.html` 原首页“多资质协同”和“专业能力”两个区块已整合进 `about.html`。
+- `insights.html` 已改为“左侧分类菜单 + 右侧内容列表”。主栏目依次为新闻动态、拍卖公告、招商信息、项目案例、行业动态、法律法规；招商信息下设二级类型：房地产、车辆、物资设备、产权、租赁权、其他。
+- `insights.html` 已增加分页，每页 10 条；分页参数写入 URL，例如 `page=2`。切换栏目或招商二级类型时回到第 1 页。
+- 案例与动态默认“新闻动态”会排除公众号文章；公众号文章不再作为前台入口展示。
+- 后台正文编辑已升级为轻量富文本编辑器，支持段落格式、字号、行距、文字颜色、加粗、斜体、下划线、列表、对齐、缩进、清除格式和正文插图；文章详情页会按富文本渲染。
+- 文章详情页已补充标题、责任编辑、发布时间和正文富文本样式。
+- 页面原有 Unsplash 外链图片已下载并替换为 `assets/site-images/` 下的本地图片，避免国内网络加载缓慢或无法显示；后续仍建议逐步替换为真实办公和项目图片。
 
 ## 网站结构
 
 项目根目录：`professional-brand-site/`
 
-- `index.html`：首页。包含首屏、新闻动态轮播、热门动态、拍卖公告、招商信息、服务领域、核心数据、专业能力、联系 CTA。
+- `index.html`：首页。包含首屏、新闻动态轮播、热门动态、拍卖公告、招商信息、行业动态、法律法规、服务领域、案例与动态、联系 CTA。
 - `about.html`：关于我们。介绍价格评估拍卖公司和房地产评估测绘公司的协同关系、资质能力和发展节点。
 - `services.html`：服务领域。分为价格评估、拍卖服务、房地产土地评估测绘、资产评估与司法辅助。
-- `insights.html`：案例与动态。左侧分类导航，右侧按 CMS 内容渲染列表；支持按栏目和招商二级类型筛选。
+- `insights.html`：案例与动态。左侧分类导航，右侧按 CMS 内容渲染列表；支持按栏目和招商二级类型筛选，并支持 URL 分页。
 - `contact.html`：联系我们。展示电话、两个业务邮箱、地址、表单和地图占位。
 - `styles.css`：全站样式。
-- `script.js`：移动端导航展开、联系表单校验、首页新闻/公告/招商接口渲染、案例动态分类列表和文章详情渲染。
+- `script.js`：移动端导航展开、联系表单校验、首页新闻/公告/招商/行业动态/法律法规接口渲染、招商标签轮动、案例动态分类分页列表和文章详情渲染。
 - `admin.html` / `admin.js`：内容管理后台，支持登录、文章管理、栏目/细分筛选、发布/下架、删除、上传封面、正文富文本编辑、正文插图和修改密码。
 - `article.html`：站内文章详情页，支持正文富文本和图片展示。
 - `cms_server.py`：轻量 CMS 服务端，提供静态文件、SQLite 数据库、登录会话和内容 API。
@@ -68,20 +76,7 @@ Logo：
 
 本地预览：
 
-```powershell
-cd "D:\My Project\claude test\professional-brand-site"
-python -m http.server 8080
-```
-
-然后访问：
-
-```text
-http://localhost:8080
-```
-
-也可以直接打开 `index.html` 预览。
-
-内容后台预览：
+本地动态预览和内容后台：
 
 ```powershell
 cd "D:\My Project\claude test\professional-brand-site"
@@ -101,29 +96,83 @@ http://127.0.0.1:8080/admin
 
 内容发布约定：
 
-- 栏目字段用于主分类：拍卖公告、行业动态、招商信息、项目案例、公众号文章。
+- 栏目字段用于主分类：拍卖公告、行业动态、招商信息、项目案例、法律法规。后台和接口仍保留 `wechat` 兼容旧数据，但前台入口已不展示公众号文章。
 - `招商信息` 的“细分类型 / 标签”建议使用固定值：`房地产`、`车辆`、`物资设备`、`产权`、`租赁权`、`其他`。前台左侧二级菜单按这些值筛选。
 - 非招商栏目可把“细分类型 / 标签”当普通标签使用，如 `交通工程`、`征迁服务`、`专业观察`、`房产推介`。
-- 公众号文章可填写外链，前台点击后新窗口打开；站内文章不填外链，会进入 `article.html?id=...`。
-- 正文富文本保存在 `articles.body` 字段中。后台工具栏支持字号、加粗、斜体、列表、对齐和插入图片；插入图片会上传到 `uploads/` 并写入正文 HTML。
+- 站内文章不填外链，会进入 `article.html?id=...`；如内容需要跳转外部页面，可填写外链，前台点击后新窗口打开。
+- 正文富文本保存在 `articles.body` 字段中。后台工具栏支持段落格式、字号、行距、文字颜色、加粗、斜体、下划线、列表、对齐、缩进和插入图片；插入图片会上传到 `uploads/` 并写入正文 HTML。
+
+公开接口当前行为：
+
+- `/api/articles` 支持 `category`、`status`、`limit`、`page`、`page_size`、`tag`、`exclude_category`。
+- `/api/articles` 返回 `articles`、`total`、`page`、`page_size`、`total_pages`。
+- `/api/articles/:id` 保持文章详情接口。
+- 后台接口继续使用 `/api/admin/*`，本阶段未引入新依赖，未改 CMS 数据结构。
+
+服务器部署与更新：
+
+- 腾讯云服务器 IP：`124.222.51.198`。
+- 正式域名：`zhongxinpm.cn`，`www.zhongxinpm.cn`；两个域名均已解析到服务器 IP。
+- 服务器项目目录：`/www/professional-brand-site`。
+- systemd 服务名：`zhongxin-cms`。
+- Nginx 站点配置：`/etc/nginx/sites-available/zhongxinpm`，已链接到 `/etc/nginx/sites-enabled/zhongxinpm`，将两个正式域名反向代理到 `127.0.0.1:8080`。
+- 2026-06-08 已验证 `http://zhongxinpm.cn/`、`http://www.zhongxinpm.cn/`、`/admin` 和 `/api/articles` 均正常返回；当前尚未配置 HTTPS。
+- 已配置 `PORT=8080` 和 CMS 管理员密码环境变量；密码属于敏感信息，不得写入 handoff、Git 或其他项目文档。
+- 正式备案号 `鲁ICP备2026030121号-1` 已于 2026-06-08 更新并部署到服务器；服务器当前部署提交为 `1d7400a`。
+- 本机已为 `ubuntu` 用户配置 SSH 公钥登录，并在 `C:\Users\Administrator\.ssh\config` 中配置别名 `zhongxin-server`。
+- `zhongxin-server` 是整台腾讯云服务器的 SSH 入口，不只用于当前项目；登录后的访问范围取决于服务器上 `ubuntu` 用户的权限。
+- `ubuntu` 已配置受限免密码 sudo，仅允许管理 `zhongxin-cms` 服务的 `restart`、`status` 和 `is-active`，不代表拥有其他免密码 root 权限。
+- 以后不要在聊天、文档或命令行参数中传递服务器密码，优先使用 SSH 密钥登录。
+- 本地提交后必须先 `git push origin main`，服务器才能 `git pull` 到最新版本。
+- 从本机连接服务器：
+
+```powershell
+ssh zhongxin-server
+```
+
+- 常规部署可从本机执行：
+
+```powershell
+ssh zhongxin-server "cd /www/professional-brand-site && git pull && sudo systemctl restart zhongxin-cms && sudo systemctl is-active zhongxin-cms"
+```
+
+- 也可以登录服务器后执行：
+
+```bash
+cd /www/professional-brand-site
+git pull
+sudo systemctl restart zhongxin-cms
+sudo systemctl status zhongxin-cms --no-pager
+```
+
+- 如果服务器 `git pull` 出现 `GnuTLS recv error (-110)`，可先执行：
+
+```bash
+sudo git config --global --add safe.directory /www/professional-brand-site
+sudo git config --global http.version HTTP/1.1
+sudo git config --global http.postBuffer 524288000
+```
+
+- 如果服务器仍无法连接 GitHub，可在本地创建 Git bundle 并通过 SSH 上传，再在服务器项目目录执行 `git pull <bundle路径> main`。2026-06-08 的备案号更新因服务器拉取 GitHub 超时，使用此方式成功部署。
+- 更新后访问 `http://124.222.51.198/`，浏览器必要时 `Ctrl + F5` 强制刷新。
+- 部署后至少检查首页、`contact.html`、`article.html` 返回 HTTP 200，并确认新内容已在线展示。
 
 修改约定：
 
 - 编辑 HTML/CSS/JS 即可。
 - 不需要安装依赖。
 - 中文文件必须保持 UTF-8，之前曾出现过乱码，后续修改要注意编辑器编码。
-- 如需改联系方式，请全站搜索旧值后替换，页脚在 5 个页面中各有一份。
+- 如需改联系方式或备案号，请全站搜索旧值后替换，多个前台页面和文章详情页里各有一份页脚。
 
 ## 下一步建议
 
 优先级从高到低：
 
-1. 补备案号：替换所有页面里的 `鲁ICP备待补充`。
-2. 补二维码：当前 `contact.html` 的二维码区域仍为占位。
-3. 核对资质名称和证号是否要公开展示。资料图片中可能包含营业执照统一社会信用代码、拍卖经营批准资质、价格评估资质等信息，目前文案层面只做概括，是否公开完整证号仍需人工确认。
-4. 用真实办公/项目图片替换 Unsplash 图片，进一步减少模板感。
-5. CMS 当前仍是轻量定制版，适合少量内部人员使用；如正式公网部署，建议补充 HTTPS、反向代理、定期数据库备份、上传文件大小限制和更完善的权限策略。
-6. 如准备上线，检查 SEO 标题、描述、favicon、统计代码和部署路径。
+1. 补二维码：当前 `contact.html` 的二维码区域仍为占位。
+2. 核对资质名称和证号是否要公开展示。资料图片中可能包含营业执照统一社会信用代码、拍卖经营批准资质、价格评估资质等信息，目前文案层面只做概括，是否公开完整证号仍需人工确认。
+3. 用真实办公/项目图片逐步替换 `assets/site-images/` 中的通用素材，进一步减少模板感。
+4. CMS 当前仍是轻量定制版，适合少量内部人员使用；如正式公网部署，建议补充 HTTPS、反向代理、定期数据库备份、上传文件大小限制和更完善的权限策略。
+5. 如准备上线，检查 SEO 标题、描述、favicon、统计代码和部署路径。
 
 ## 关键事实来源
 

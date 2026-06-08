@@ -245,11 +245,11 @@ async function fetchArticles(params = {}) {
 }
 
 const noticeFallbackImages = {
-    auction: "https://images.unsplash.com/photo-1556761175-b413da4baf72?auto=format&fit=crop&w=760&q=80",
-    industry: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=760&q=80",
-    investment: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=760&q=80",
-    case: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1100&q=82",
-    wechat: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1100&q=82",
+    auction: "assets/site-images/auction.jpg",
+    industry: "assets/site-images/industry.jpg",
+    investment: "assets/site-images/building-hero.jpg",
+    case: "assets/site-images/case.jpg",
+    wechat: "assets/site-images/building-hero.jpg",
 };
 
 async function hydrateNoticeBoard() {

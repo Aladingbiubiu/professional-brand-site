@@ -156,7 +156,7 @@ a {
     min-height: 560px;
     display: flex;
     align-items: center;
-    background-image: url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1800&q=82");
+    background-image: url("assets/site-images/building-hero.jpg");
 }
 
 .hero-overlay,
@@ -1120,19 +1120,19 @@ a {
 }
 
 .about-hero {
-    background-image: url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=82");
+    background-image: url("assets/site-images/office-hero.jpg");
 }
 
 .services-hero {
-    background-image: url("https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1800&q=82");
+    background-image: url("assets/site-images/team-hero.jpg");
 }
 
 .insights-hero {
-    background-image: url("https://images.unsplash.com/photo-1551836022-4c4c79ecde51?auto=format&fit=crop&w=1800&q=82");
+    background-image: url("assets/site-images/meeting-hero.jpg");
 }
 
 .contact-hero {
-    background-image: url("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1800&q=82");
+    background-image: url("assets/site-images/workspace-hero.jpg");
 }
 
 .page-hero h1 {
@@ -1755,7 +1755,7 @@ textarea:focus {
     color: #fff;
     background:
         linear-gradient(rgba(8, 33, 93, 0.74), rgba(8, 33, 93, 0.74)),
-        url("https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1600&q=80") center/cover;
+        url("assets/site-images/city-map.jpg") center/cover;
     font-size: 22px;
     font-weight: 700;
 }
