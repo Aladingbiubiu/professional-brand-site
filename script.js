@@ -632,7 +632,7 @@ async function hydrateArticleDetail() {
         document.title = `${article.title} | 山东众信价格评估拍卖有限公司`;
         const canonical = document.querySelector('link[rel="canonical"]');
         if (canonical) {
-            canonical.href = `http://zhongxinpm.cn/article.html?id=${encodeURIComponent(id)}`;
+            canonical.href = `https://zhongxinpm.cn/article.html?id=${encodeURIComponent(id)}`;
         }
         const description = document.querySelector('meta[name="description"]');
         if (description && article.summary) {
