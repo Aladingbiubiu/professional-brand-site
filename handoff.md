@@ -116,6 +116,7 @@ http://127.0.0.1:8080/admin
 - 服务器项目目录：`/www/professional-brand-site`。
 - systemd 服务名：`zhongxin-cms`。
 - Nginx 站点配置：`/etc/nginx/sites-available/zhongxinpm`，已链接到 `/etc/nginx/sites-enabled/zhongxinpm`，将两个正式域名反向代理到 `127.0.0.1:8080`。
+- Nginx 直接提供 `/assets/`、`styles.css` 和 `script.js`；图片缓存 7 天，CSS/JS 缓存 1 小时，减少静态资源经 Python CMS 转发的开销。
 - 2026-06-08 已验证 `http://zhongxinpm.cn/`、`http://www.zhongxinpm.cn/`、`/admin` 和 `/api/articles` 均正常返回；当前尚未配置 HTTPS。
 - 已配置 `PORT=8080` 和 CMS 管理员密码环境变量；密码属于敏感信息，不得写入 handoff、Git 或其他项目文档。
 - 正式备案号 `鲁ICP备2026030121号-1` 已于 2026-06-08 更新并部署到服务器；服务器当前部署提交为 `1d7400a`。
