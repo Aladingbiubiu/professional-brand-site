@@ -13,12 +13,14 @@ from http import cookies
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
+from xml.sax.saxutils import escape
 
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
 UPLOAD_DIR = ROOT / "uploads"
 DB_PATH = DATA_DIR / "content.db"
+SITE_URL = os.environ.get("SITE_URL", "http://zhongxinpm.cn").rstrip("/")
 SESSION_SECONDS = 60 * 60 * 8
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 CATEGORIES = {"auction", "industry", "investment", "case", "law", "wechat"}
@@ -181,6 +183,9 @@ class CMSHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/sitemap.xml":
+            self.handle_sitemap()
+            return
         if parsed.path == "/api/articles":
             self.handle_public_articles(parsed)
             return
@@ -250,6 +255,14 @@ class CMSHandler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def write_text(self, body: str, content_type: str, status: int = 200) -> None:
+        encoded = body.encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", f"{content_type}; charset=utf-8")
+        self.send_header("Content-Length", str(len(encoded)))
+        self.end_headers()
+        self.wfile.write(encoded)
 
     def error_json(self, status: int, message: str) -> None:
         self.write_json({"ok": False, "message": message}, status)
@@ -349,6 +362,57 @@ class CMSHandler(SimpleHTTPRequestHandler):
             self.error_json(404, "文章不存在或未发布")
             return
         self.write_json({"ok": True, "article": article_row_to_dict(row)})
+
+    def handle_sitemap(self) -> None:
+        static_pages = [
+            ("", "weekly", "1.0"),
+            ("about.html", "monthly", "0.8"),
+            ("services.html", "monthly", "0.8"),
+            ("insights.html", "daily", "0.9"),
+            ("contact.html", "monthly", "0.6"),
+        ]
+        urls = [
+            (
+                SITE_URL + (f"/{path}" if path else "/"),
+                "",
+                changefreq,
+                priority,
+            )
+            for path, changefreq, priority in static_pages
+        ]
+        with db() as conn:
+            rows = conn.execute(
+                """
+                select id, published_at, updated_at
+                from articles
+                where status = 'published' and trim(external_url) = ''
+                order by date(published_at) desc, id desc
+                """
+            ).fetchall()
+        urls.extend(
+            (
+                f"{SITE_URL}/article.html?id={row['id']}",
+                (row["updated_at"] or row["published_at"] or "")[:10],
+                "monthly",
+                "0.7",
+            )
+            for row in rows
+        )
+        entries = []
+        for loc, lastmod, changefreq, priority in urls:
+            lastmod_xml = f"\n    <lastmod>{escape(lastmod)}</lastmod>" if lastmod else ""
+            entries.append(
+                "  <url>\n"
+                f"    <loc>{escape(loc)}</loc>{lastmod_xml}\n"
+                f"    <changefreq>{changefreq}</changefreq>\n"
+                f"    <priority>{priority}</priority>\n"
+                "  </url>"
+            )
+        body = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        body += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        body += "\n".join(entries)
+        body += "\n</urlset>\n"
+        self.write_text(body, "application/xml")
 
     def handle_me(self) -> None:
         user = self.current_user()

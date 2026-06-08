@@ -630,6 +630,14 @@ async function hydrateArticleDetail() {
 
         const article = data.article;
         document.title = `${article.title} | 山东众信价格评估拍卖有限公司`;
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) {
+            canonical.href = `http://zhongxinpm.cn/article.html?id=${encodeURIComponent(id)}`;
+        }
+        const description = document.querySelector('meta[name="description"]');
+        if (description && article.summary) {
+            description.content = article.summary;
+        }
         title.textContent = article.title;
         document.querySelector("#articleContentTitle").textContent = article.title;
         document.querySelector("#articleCategory").textContent = categoryNames[article.category] || "News";
