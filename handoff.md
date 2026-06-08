@@ -119,7 +119,7 @@ http://127.0.0.1:8080/admin
 - Nginx 站点配置：`/etc/nginx/sites-available/zhongxinpm`，已链接到 `/etc/nginx/sites-enabled/zhongxinpm`，将两个正式域名反向代理到 `127.0.0.1:8080`。
 - Nginx 直接提供 `/assets/`、`styles.css` 和 `script.js`；图片缓存 7 天，CSS/JS 缓存 1 小时，减少静态资源经 Python CMS 转发的开销。
 - 2026-06-08 已签发 `zhongxinpm.cn` 与 `www.zhongxinpm.cn` 的 Let's Encrypt HTTPS 证书，证书到期日为 2026-09-06，Certbot 自动续期计时器已启用。
-- 服务器内部 HTTPS 已验证正常；腾讯云安全组仍需放行入站 TCP 443，放行后公网 HTTPS 才能访问。
+- 服务器内部 HTTPS 已验证正常；腾讯云安全组仍需放行入站 TCP 443，放行前继续由 HTTP 提供公网访问，不启用强制 HTTPS 跳转。
 - 已配置 `PORT=8080` 和 CMS 管理员密码环境变量；密码属于敏感信息，不得写入 handoff、Git 或其他项目文档。
 - 正式备案号 `鲁ICP备2026030121号-1` 已于 2026-06-08 更新并部署到服务器；服务器当前部署提交为 `1d7400a`。
 - 本机已为 `ubuntu` 用户配置 SSH 公钥登录，并在 `C:\Users\Administrator\.ssh\config` 中配置别名 `zhongxin-server`。

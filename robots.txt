@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin/
 
-Sitemap: https://zhongxinpm.cn/sitemap.xml
+Sitemap: http://zhongxinpm.cn/sitemap.xml
