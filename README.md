@@ -36,7 +36,7 @@ python cms_server.py
 ## 上线前清单
 
 - 全站页脚已更新正式 ICP 备案号：`鲁ICP备2026030121号-1`。
-- 将 `assets/wechat-qr-placeholder.svg` 替换为正式公众号或微信二维码图片，并保持 `contact.html` 中的路径稳定。
+- 公众号二维码使用 `assets/wechat-official-account-qr.jpg`，展示于 `contact.html`。
 - 确认证照图片中的证号、统一社会信用代码等信息是否允许公开；如需保守展示，请先使用打码版本替换原图。
 - 部署 CMS 前修改后台密码，建议设置 `CMS_ADMIN_PASSWORD` 后首次初始化数据库；如数据库已生成，请在后台“账号设置”中修改。
 - 备份 `data/content.db` 与 `uploads/`，并在正式环境使用 HTTPS、反向代理和定期备份。
