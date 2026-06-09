@@ -667,14 +667,19 @@ class CMSHandler(SimpleHTTPRequestHandler):
         payload = self.read_json()
         old_password = payload.get("old_password") or ""
         new_password = payload.get("new_password") or ""
-        if len(new_password) < 6:
-            self.error_json(400, "新密码至少 6 位")
+        if len(new_password) < 10 or not re.search(r"[A-Za-z]", new_password) or not re.search(r"\d", new_password):
+            self.error_json(400, "新密码至少 10 位，并同时包含字母和数字")
+            return
+        if old_password == new_password:
+            self.error_json(400, "新密码不能与当前密码相同")
             return
         if not verify_password(old_password, user["password_hash"]):
             self.error_json(400, "原密码错误")
             return
+        current_token = self.get_session_token()
         with db() as conn:
             conn.execute("update users set password_hash = ? where id = ?", (hash_password(new_password), user["id"]))
+            conn.execute("delete from sessions where user_id = ? and token != ?", (user["id"], current_token))
         self.write_json({"ok": True})
 
     def handle_save_article(self, article_id: int | None = None) -> None:

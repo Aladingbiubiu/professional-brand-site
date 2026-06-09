@@ -842,16 +842,33 @@ document.querySelector("#passwordForm").addEventListener("submit", async (event)
     event.preventDefault();
     const form = event.currentTarget;
     const message = document.querySelector("#passwordMessage");
+    const oldPassword = form.elements.old_password.value;
+    const newPassword = form.elements.new_password.value;
+    const confirmPassword = form.elements.confirm_password.value;
+
+    if (newPassword !== confirmPassword) {
+        showMessage(message, "两次输入的新密码不一致。", true);
+        return;
+    }
+    if (oldPassword === newPassword) {
+        showMessage(message, "新密码不能与当前密码相同。", true);
+        return;
+    }
+    if (newPassword.length < 10 || !/[A-Za-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+        showMessage(message, "新密码至少 10 位，并同时包含字母和数字。", true);
+        return;
+    }
+
     try {
         await request("/api/admin/password", {
             method: "POST",
             body: JSON.stringify({
-                old_password: form.elements.old_password.value,
-                new_password: form.elements.new_password.value,
+                old_password: oldPassword,
+                new_password: newPassword,
             }),
         });
         form.reset();
-        showMessage(message, "密码已更新。");
+        showMessage(message, "密码已更新，其他设备上的后台登录已退出。");
     } catch (error) {
         showMessage(message, error.message, true);
     }
