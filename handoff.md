@@ -184,7 +184,7 @@ sudo git config --global http.postBuffer 524288000
 资料来自 `ziliao/`：
 
 - `山东众信价格评估拍卖有限公司简介.doc`
-- `山东众信房地产评估测绘有限公司简介.docx`
+- `山东众信土地房地产评估测绘有限公司简介.docx`
 
 资料图片整理状态：
 
