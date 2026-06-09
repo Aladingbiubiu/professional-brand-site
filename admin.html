@@ -270,6 +270,13 @@
             font-size: 12px;
         }
 
+        .inquiry-message {
+            min-width: 220px;
+            max-width: 420px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
         .admin-message {
             min-height: 24px;
             margin-top: 14px;
@@ -353,6 +360,7 @@
             <div class="admin-nav">
                 <button class="active" type="button" data-view="dashboard">工作台</button>
                 <button type="button" data-view="articles">内容管理</button>
+                <button type="button" data-view="inquiries">客户需求</button>
                 <button type="button" data-view="editor">新建内容</button>
                 <button type="button" data-view="settings">账号设置</button>
             </div>
@@ -409,6 +417,25 @@
                     </thead>
                     <tbody id="articleRows"></tbody>
                 </table>
+            </section>
+
+            <section id="inquiriesPanel" class="hidden">
+                <div class="filter-row">
+                    <select id="inquiryStatusFilter">
+                        <option value="">全部状态</option>
+                        <option value="new">待处理</option>
+                        <option value="contacted">已联系</option>
+                        <option value="closed">已完成</option>
+                    </select>
+                    <button id="refreshInquiriesBtn" class="admin-btn light" type="button">刷新</button>
+                </div>
+                <table class="article-table">
+                    <thead>
+                        <tr><th>联系人</th><th>单位与事项</th><th>留言</th><th>状态</th><th>提交时间</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="inquiryRows"></tbody>
+                </table>
+                <p id="inquiryMessage" class="admin-message"></p>
             </section>
 
             <section id="editorPanel" class="admin-card hidden">
@@ -530,6 +557,6 @@
         </main>
     </section>
 
-    <script src="admin.js"></script>
+    <script src="admin.js?v=20260609-inquiries"></script>
 </body>
 </html>

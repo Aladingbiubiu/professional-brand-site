@@ -20,7 +20,7 @@
   - 房地产评估邮箱：`sdtaxtzx@163.com`
   - 地址：`济南市历下区经十路11111号`
 - 正式备案号已更新：`鲁ICP备2026030121号-1`。
-- 联系页表单是前端模拟提交，不接后端。
+- 联系页表单已接入 CMS：提交后保存到 SQLite `inquiries` 表，后台“客户需求”可查看、更新处理状态和删除记录；SMTP 邮件通知为可选配置，未配置时不影响需求保存。
 - 已新增轻量内容后台：`cms_server.py` 使用 Python 标准库 + SQLite，后台入口 `/admin`。首次创建数据库时默认账号为 `admin`，默认密码来自 `CMS_ADMIN_PASSWORD` 环境变量，未设置时为 `admin123`；正式部署前必须修改密码。
 - 首页信息区已改为“大图新闻动态 + 热门列表 + 拍卖公告 + 招商信息 + 行业动态/法律法规”的结构，动态内容优先从 CMS 读取，接口失败时保留静态兜底。
 - 首页新闻动态轮播当前聚合 `拍卖公告`、`招商信息`、`行业动态` 三类内容。
@@ -48,6 +48,7 @@
 - `styles.css`：全站样式。
 - `script.js`：移动端导航展开、联系表单校验、首页新闻/公告/招商/行业动态/法律法规接口渲染、招商标签轮动、案例动态分类分页列表和文章详情渲染。
 - `admin.html` / `admin.js`：内容管理后台，支持登录、文章管理、栏目/细分筛选、发布/下架、删除、上传封面、正文富文本编辑、正文插图和修改密码。
+- 后台“客户需求”页面支持查看官网联系表单提交记录，并标记为待处理、已联系或已完成。
 - `article.html`：站内文章详情页，支持正文富文本和图片展示。
 - `cms_server.py`：轻量 CMS 服务端，提供静态文件、SQLite 数据库、登录会话和内容 API。
 - `data/`：运行后生成 SQLite 数据库，已加入 `.gitignore`。
@@ -109,7 +110,8 @@ http://127.0.0.1:8080/admin
 - `/api/articles` 支持 `category`、`status`、`limit`、`page`、`page_size`、`tag`、`exclude_category`。
 - `/api/articles` 返回 `articles`、`total`、`page`、`page_size`、`total_pages`。
 - `/api/articles/:id` 保持文章详情接口。
-- 后台接口继续使用 `/api/admin/*`，本阶段未引入新依赖，未改 CMS 数据结构。
+- 后台接口继续使用 `/api/admin/*`，未引入新依赖；CMS 新增 `inquiries` 表保存客户需求。
+- 联系表单使用 `POST /api/inquiries`；后台需求接口使用 `/api/admin/inquiries` 和 `/api/admin/inquiries/:id`。需求数据保存在 SQLite `inquiries` 表。
 
 服务器部署与更新：
 

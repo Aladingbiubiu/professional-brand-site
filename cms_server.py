@@ -7,8 +7,10 @@ import os
 import re
 import secrets
 import shutil
+import smtplib
 import sqlite3
 from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
 from http import cookies
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -25,6 +27,8 @@ SESSION_SECONDS = 60 * 60 * 8
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 CATEGORIES = {"auction", "industry", "investment", "case", "law", "wechat"}
 STATUSES = {"draft", "published", "archived"}
+INQUIRY_STATUSES = {"new", "contacted", "closed"}
+INQUIRY_LAST_SUBMISSION: dict[str, datetime] = {}
 
 
 def now_iso() -> str:
@@ -82,6 +86,21 @@ def article_row_to_dict(row: sqlite3.Row) -> dict:
     }
 
 
+def inquiry_row_to_dict(row: sqlite3.Row) -> dict:
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "phone": row["phone"],
+        "company": row["company"],
+        "topic": row["topic"],
+        "message": row["message"],
+        "status": row["status"],
+        "source_ip": row["source_ip"],
+        "created_at": row["created_at"],
+        "updated_at": row["updated_at"],
+    }
+
+
 def init_db() -> None:
     DATA_DIR.mkdir(exist_ok=True)
     UPLOAD_DIR.mkdir(exist_ok=True)
@@ -117,6 +136,19 @@ def init_db() -> None:
                 status text not null default 'draft',
                 sort_order integer not null default 0,
                 tag text not null default '',
+                created_at text not null,
+                updated_at text not null
+            );
+
+            create table if not exists inquiries (
+                id integer primary key autoincrement,
+                name text not null,
+                phone text not null,
+                company text not null,
+                topic text not null,
+                message text not null,
+                status text not null default 'new',
+                source_ip text not null default '',
                 created_at text not null,
                 updated_at text not null
             );
@@ -198,6 +230,9 @@ class CMSHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/admin/articles":
             self.handle_admin_articles(parsed)
             return
+        if parsed.path == "/api/admin/inquiries":
+            self.handle_admin_inquiries(parsed)
+            return
         super().do_GET()
 
     def do_HEAD(self) -> None:
@@ -224,12 +259,18 @@ class CMSHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/admin/upload":
             self.handle_upload()
             return
+        if parsed.path == "/api/inquiries":
+            self.handle_submit_inquiry()
+            return
         self.not_found()
 
     def do_PUT(self) -> None:
         parsed = urlparse(self.path)
         if parsed.path.startswith("/api/admin/articles/"):
             self.handle_save_article(self.article_id_from_path(parsed.path))
+            return
+        if parsed.path.startswith("/api/admin/inquiries/"):
+            self.handle_update_inquiry(self.article_id_from_path(parsed.path))
             return
         self.not_found()
 
@@ -244,6 +285,17 @@ class CMSHandler(SimpleHTTPRequestHandler):
                 return
             with db() as conn:
                 conn.execute("delete from articles where id = ?", (article_id,))
+            self.write_json({"ok": True})
+            return
+        if parsed.path.startswith("/api/admin/inquiries/"):
+            inquiry_id = self.article_id_from_path(parsed.path)
+            if not inquiry_id:
+                self.error_json(400, "无效需求 ID")
+                return
+            if not self.require_user():
+                return
+            with db() as conn:
+                conn.execute("delete from inquiries where id = ?", (inquiry_id,))
             self.write_json({"ok": True})
             return
         self.not_found()
@@ -450,6 +502,127 @@ class CMSHandler(SimpleHTTPRequestHandler):
                 values,
             ).fetchall()
         self.write_json({"ok": True, "articles": [article_row_to_dict(row) for row in rows]})
+
+    def handle_submit_inquiry(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        if length <= 0 or length > 32 * 1024:
+            self.error_json(400, "提交内容无效")
+            return
+        payload = self.read_json()
+        if payload.get("website"):
+            self.write_json({"ok": True, "message": "提交成功。"})
+            return
+
+        name = (payload.get("name") or "").strip()
+        phone = (payload.get("phone") or "").strip()
+        company = (payload.get("company") or "").strip()
+        topic = (payload.get("topic") or "").strip()
+        message = (payload.get("message") or "").strip()
+        if not all([name, phone, company, topic, message]):
+            self.error_json(400, "请完整填写需求信息")
+            return
+        if len(name) > 50 or len(phone) > 30 or len(company) > 120 or len(topic) > 50 or len(message) > 2000:
+            self.error_json(400, "提交内容过长，请精简后重试")
+            return
+        if not re.fullmatch(r"[0-9+\-\s]{6,20}", phone):
+            self.error_json(400, "联系电话格式不正确")
+            return
+
+        source_ip = self.headers.get("X-Real-IP") or self.client_address[0]
+        now = datetime.now(timezone.utc)
+        last_submission = INQUIRY_LAST_SUBMISSION.get(source_ip)
+        if last_submission and now - last_submission < timedelta(seconds=30):
+            self.error_json(429, "提交过于频繁，请稍后再试")
+            return
+        INQUIRY_LAST_SUBMISSION[source_ip] = now
+
+        timestamp = now_iso()
+        with db() as conn:
+            cur = conn.execute(
+                """
+                insert into inquiries
+                (name, phone, company, topic, message, status, source_ip, created_at, updated_at)
+                values (?, ?, ?, ?, ?, 'new', ?, ?, ?)
+                """,
+                (name, phone, company, topic, message, source_ip, timestamp, timestamp),
+            )
+            inquiry_id = cur.lastrowid
+        self.notify_inquiry({
+            "id": inquiry_id,
+            "name": name,
+            "phone": phone,
+            "company": company,
+            "topic": topic,
+            "message": message,
+        })
+        self.write_json({"ok": True, "message": "提交成功，我们会尽快与您联系。"})
+
+    def notify_inquiry(self, inquiry: dict) -> None:
+        host = os.environ.get("SMTP_HOST", "").strip()
+        username = os.environ.get("SMTP_USERNAME", "").strip()
+        password = os.environ.get("SMTP_PASSWORD", "")
+        if not host or not username or not password:
+            return
+        recipient = (
+            os.environ.get("INQUIRY_REAL_ESTATE_EMAIL", "sdtaxtzx@163.com")
+            if inquiry["topic"] == "房地产土地评估测绘"
+            else os.environ.get("INQUIRY_PRICE_EMAIL", "zxpgpm@163.com")
+        )
+        email = EmailMessage()
+        email["Subject"] = f"官网新需求：{inquiry['topic']} - {inquiry['name']}"
+        email["From"] = os.environ.get("SMTP_FROM", username)
+        email["To"] = recipient
+        email.set_content(
+            f"需求编号：{inquiry['id']}\n"
+            f"姓名：{inquiry['name']}\n"
+            f"电话：{inquiry['phone']}\n"
+            f"单位：{inquiry['company']}\n"
+            f"咨询事项：{inquiry['topic']}\n\n"
+            f"留言：\n{inquiry['message']}\n"
+        )
+        try:
+            port = int(os.environ.get("SMTP_PORT", "465"))
+            with smtplib.SMTP_SSL(host, port, timeout=10) as smtp:
+                smtp.login(username, password)
+                smtp.send_message(email)
+        except Exception as exc:
+            print(f"Inquiry email notification failed: {exc}")
+
+    def handle_admin_inquiries(self, parsed) -> None:
+        if not self.require_user():
+            return
+        qs = parse_qs(parsed.query)
+        status = qs.get("status", [""])[0]
+        where = "where status = ?" if status in INQUIRY_STATUSES else ""
+        values = [status] if where else []
+        with db() as conn:
+            rows = conn.execute(
+                f"select * from inquiries {where} order by datetime(created_at) desc, id desc",
+                values,
+            ).fetchall()
+        self.write_json({"ok": True, "inquiries": [inquiry_row_to_dict(row) for row in rows]})
+
+    def handle_update_inquiry(self, inquiry_id: int | None) -> None:
+        if not inquiry_id:
+            self.error_json(400, "无效需求 ID")
+            return
+        if not self.require_user():
+            return
+        payload = self.read_json()
+        status = payload.get("status") or ""
+        if status not in INQUIRY_STATUSES:
+            self.error_json(400, "需求状态不正确")
+            return
+        with db() as conn:
+            conn.execute(
+                "update inquiries set status = ?, updated_at = ? where id = ?",
+                (status, now_iso(), inquiry_id),
+            )
+            row = conn.execute("select * from inquiries where id = ?", (inquiry_id,)).fetchone()
+        if not row:
+            self.error_json(404, "需求不存在")
+            return
+        self.write_json({"ok": True, "inquiry": inquiry_row_to_dict(row)})
 
     def handle_login(self) -> None:
         payload = self.read_json()

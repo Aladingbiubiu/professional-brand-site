@@ -15,8 +15,15 @@ const statusLabels = {
     archived: "下架",
 };
 
+const inquiryStatusLabels = {
+    new: "待处理",
+    contacted: "已联系",
+    closed: "已完成",
+};
+
 const state = {
     articles: [],
+    inquiries: [],
     currentView: "dashboard",
 };
 
@@ -33,6 +40,7 @@ const viewHint = document.querySelector("#viewHint");
 const panels = {
     dashboard: document.querySelector("#dashboardPanel"),
     articles: document.querySelector("#articlesPanel"),
+    inquiries: document.querySelector("#inquiriesPanel"),
     editor: document.querySelector("#editorPanel"),
     settings: document.querySelector("#settingsPanel"),
 };
@@ -312,6 +320,7 @@ function switchView(view) {
     const titles = {
         dashboard: ["工作台", "管理公告、动态、招商信息和案例内容。"],
         articles: ["内容管理", "筛选、编辑、发布或下架内容。"],
+        inquiries: ["客户需求", "查看官网表单提交，并记录后续联系状态。"],
         editor: ["内容编辑", "填写标题、栏目、摘要和发布状态。"],
         settings: ["账号设置", "维护管理员登录密码。"],
     };
@@ -320,6 +329,9 @@ function switchView(view) {
 
     if (view === "dashboard" || view === "articles") {
         loadArticles();
+    }
+    if (view === "inquiries") {
+        loadInquiries();
     }
 }
 
@@ -351,6 +363,46 @@ async function loadArticles() {
     state.articles = tag ? data.articles.filter((article) => article.tag === tag) : data.articles;
     renderRows();
     renderDashboard();
+}
+
+async function loadInquiries() {
+    const status = document.querySelector("#inquiryStatusFilter").value;
+    const params = new URLSearchParams();
+    if (status) {
+        params.set("status", status);
+    }
+    const data = await request(`/api/admin/inquiries?${params.toString()}`);
+    state.inquiries = data.inquiries;
+    renderInquiryRows();
+}
+
+function formatDateTime(value) {
+    return String(value || "").replace("T", " ").replace("+00:00", " UTC");
+}
+
+function renderInquiryRows() {
+    const rows = document.querySelector("#inquiryRows");
+    if (!state.inquiries.length) {
+        rows.innerHTML = '<tr><td colspan="6">暂无客户需求。</td></tr>';
+        return;
+    }
+    rows.innerHTML = state.inquiries.map((inquiry) => `
+        <tr>
+            <td><strong>${escapeHtml(inquiry.name)}</strong><br><a href="tel:${escapeHtml(inquiry.phone)}">${escapeHtml(inquiry.phone)}</a></td>
+            <td>${escapeHtml(inquiry.company)}<br><span class="status-pill">${escapeHtml(inquiry.topic)}</span></td>
+            <td class="inquiry-message">${escapeHtml(inquiry.message)}</td>
+            <td><span class="status-pill">${inquiryStatusLabels[inquiry.status] || inquiry.status}</span></td>
+            <td>${escapeHtml(formatDateTime(inquiry.created_at))}</td>
+            <td>
+                <select data-inquiry-status="${inquiry.id}">
+                    <option value="new" ${inquiry.status === "new" ? "selected" : ""}>待处理</option>
+                    <option value="contacted" ${inquiry.status === "contacted" ? "selected" : ""}>已联系</option>
+                    <option value="closed" ${inquiry.status === "closed" ? "selected" : ""}>已完成</option>
+                </select>
+                <button class="admin-btn danger" type="button" data-delete-inquiry="${inquiry.id}">删除</button>
+            </td>
+        </tr>
+    `).join("");
 }
 
 function updateTagFilterVisibility() {
@@ -529,6 +581,8 @@ document.querySelector("#categoryFilter").addEventListener("change", () => {
 });
 document.querySelector("#tagFilter").addEventListener("change", loadArticles);
 document.querySelector("#statusFilter").addEventListener("change", loadArticles);
+document.querySelector("#inquiryStatusFilter").addEventListener("change", loadInquiries);
+document.querySelector("#refreshInquiriesBtn").addEventListener("click", loadInquiries);
 document.querySelector("#newArticleBtn").addEventListener("click", () => fillForm());
 document.querySelector("#clearFormBtn").addEventListener("click", () => fillForm());
 document.querySelector("#previewBtn").addEventListener("click", previewCurrent);
@@ -602,6 +656,39 @@ document.querySelector("#articleRows").addEventListener("click", async (event) =
     if (deleteId && confirm("确定删除这条内容吗？")) {
         await request(`/api/admin/articles/${deleteId}`, { method: "DELETE" });
         await loadArticles();
+    }
+});
+
+document.querySelector("#inquiryRows").addEventListener("change", async (event) => {
+    const inquiryId = event.target.dataset.inquiryStatus;
+    if (!inquiryId) {
+        return;
+    }
+    const message = document.querySelector("#inquiryMessage");
+    try {
+        await request(`/api/admin/inquiries/${inquiryId}`, {
+            method: "PUT",
+            body: JSON.stringify({ status: event.target.value }),
+        });
+        showMessage(message, "需求状态已更新。");
+        await loadInquiries();
+    } catch (error) {
+        showMessage(message, error.message, true);
+    }
+});
+
+document.querySelector("#inquiryRows").addEventListener("click", async (event) => {
+    const inquiryId = event.target.dataset.deleteInquiry;
+    if (!inquiryId || !confirm("确定删除这条客户需求吗？")) {
+        return;
+    }
+    const message = document.querySelector("#inquiryMessage");
+    try {
+        await request(`/api/admin/inquiries/${inquiryId}`, { method: "DELETE" });
+        showMessage(message, "客户需求已删除。");
+        await loadInquiries();
+    } catch (error) {
+        showMessage(message, error.message, true);
     }
 });
 

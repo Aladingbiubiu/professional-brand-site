@@ -12,10 +12,11 @@ const contactForm = document.querySelector(".contact-form");
 const investmentTags = ["房地产", "车辆", "物资设备", "产权", "租赁权", "其他"];
 
 if (contactForm) {
-    contactForm.addEventListener("submit", (event) => {
+    contactForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
         const message = contactForm.querySelector(".form-message");
+        const submitButton = contactForm.querySelector('button[type="submit"]');
 
         if (!contactForm.checkValidity()) {
             message.textContent = "请完整填写姓名、电话、单位名称、咨询事项和留言。";
@@ -24,9 +25,28 @@ if (contactForm) {
             return;
         }
 
-        message.textContent = "提交成功。我们将根据您的需求安排后续沟通。";
+        submitButton.disabled = true;
+        message.textContent = "正在提交，请稍候...";
         message.classList.remove("error");
-        contactForm.reset();
+        const payload = Object.fromEntries(new FormData(contactForm).entries());
+        try {
+            const response = await fetch("/api/inquiries", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const data = await response.json();
+            if (!response.ok || data.ok === false) {
+                throw new Error(data.message || "提交失败，请稍后重试。");
+            }
+            message.textContent = data.message || "提交成功。我们将根据您的需求安排后续沟通。";
+            contactForm.reset();
+        } catch (error) {
+            message.textContent = error.message;
+            message.classList.add("error");
+        } finally {
+            submitButton.disabled = false;
+        }
     });
 }
 
