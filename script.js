@@ -423,7 +423,6 @@ async function hydrateNewsShowcase() {
     const groups = await Promise.all([
         fetchArticles({ category: "auction", limit: "4" }),
         fetchArticles({ category: "investment", limit: "4" }),
-        fetchArticles({ category: "industry", limit: "4" }),
     ]);
     const articles = groups
         .flatMap((group) => group.articles || [])
@@ -519,7 +518,7 @@ async function hydrateArticleList() {
     if (category) {
         requestParams.category = category;
     } else {
-        requestParams.exclude_category = "wechat";
+        requestParams.exclude_category = "wechat,industry,law";
     }
 
     if (tag) {

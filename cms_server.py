@@ -372,7 +372,11 @@ class CMSHandler(SimpleHTTPRequestHandler):
         page_size = positive_int(qs.get("page_size", [str(limit)])[0], limit, 100)
         page = positive_int(qs.get("page", ["1"])[0], 1)
         tag = qs.get("tag", [""])[0]
-        exclude_category = qs.get("exclude_category", [""])[0]
+        exclude_categories = [
+            item.strip()
+            for item in qs.get("exclude_category", [""])[0].split(",")
+            if item.strip()
+        ]
         offset = (page - 1) * page_size
 
         where = ["status = ?"]
@@ -386,9 +390,10 @@ class CMSHandler(SimpleHTTPRequestHandler):
         elif tag:
             where.append("tag = ?")
             values.append(tag)
-        if exclude_category:
-            where.append("category != ?")
-            values.append(exclude_category)
+        if exclude_categories:
+            placeholders = ", ".join("?" for _ in exclude_categories)
+            where.append(f"category not in ({placeholders})")
+            values.extend(exclude_categories)
 
         with db() as conn:
             total = conn.execute(
