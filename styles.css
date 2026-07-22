@@ -642,11 +642,15 @@ a {
     position: absolute;
     inset: 0;
     opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
     transition: opacity 0.45s ease;
 }
 
 .news-slide.active {
     opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 .news-slide img {
