@@ -1820,13 +1820,30 @@ textarea:focus {
 }
 
 .footer-brand {
+    width: 100%;
+    min-width: 0;
     max-width: 500px;
     padding: 8px 12px;
+    gap: 12px;
     background: #fff;
 }
 
 .footer-brand .brand-logo {
-    height: 88px;
+    width: 72px;
+    height: 72px;
+    flex: 0 0 72px;
+    border-radius: 11px;
+    box-shadow: 0 4px 12px rgba(8, 31, 92, 0.16);
+}
+
+.footer-brand .brand-copy strong {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.footer-brand .brand-copy small {
+    font-size: 8px;
+    letter-spacing: 0;
 }
 
 .site-footer h3 {
@@ -2058,7 +2075,10 @@ textarea:focus {
     }
 
     .footer-brand .brand-logo {
-        height: 74px;
+        width: 58px;
+        height: 58px;
+        flex-basis: 58px;
+        border-radius: 9px;
     }
 
     .section {

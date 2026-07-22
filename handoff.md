@@ -11,7 +11,7 @@
 已完成：
 
 - 搭建 5 个静态页面：首页、关于我们、服务领域、案例与动态、联系我们。
-- 页头左侧使用用户定稿的 `assets/logo-original.png`，并在右侧保留两行公司全称及英文说明；浏览器标签页图标同样使用该图片。页脚继续使用 `assets/logo-header.svg` 横版机构 logo。
+- 全站页头、页脚、浏览器标签页图标和页面分享图统一使用用户定稿的 `assets/logo-original.png`；页头和页脚均在图片右侧保留两行公司全称及英文说明。
 - 根据 `ziliao/` 中的 Word 资料替换了通用模板文案。
 - `about.html` 的“资质荣誉”区块当前先展示 `ziliao/` 下两张核心 JPG：价格鉴证评估机构执业登记证书、价格鉴证评估资信等级。
 - 真实联系方式已更新：
@@ -69,9 +69,9 @@
 
 Logo：
 
-- 页头图形和标签页图标：`assets/logo-original.png`。图片本身不再加工，页头通过 CSS 显示圆角并搭配两行公司全称和英文说明。
-- 页脚横版 logo：`assets/logo-header.svg`。
+- 页头、页脚、标签页图标和分享图：`assets/logo-original.png`。图片本身不再加工，页头和页脚通过 CSS 显示圆角并搭配两行公司全称和英文说明。
 - 旧资源还保留：
+  - `assets/logo-header.svg`：此前的页脚横版 logo，当前未使用。
   - `assets/logo.png`：此前的大画布横版 logo，当前未使用。
   - `assets/logo.svg`：早期生成版本，当前未使用。
 
