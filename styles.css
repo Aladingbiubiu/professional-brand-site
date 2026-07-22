@@ -74,6 +74,49 @@ a {
     object-position: left center;
 }
 
+.site-header .brand {
+    width: 470px;
+    min-width: 430px;
+    max-width: 500px;
+    flex: 0 1 470px;
+    gap: 14px;
+}
+
+.site-header .brand-logo {
+    width: 70px;
+    height: 70px;
+    flex: 0 0 70px;
+    border-radius: 11px;
+    box-shadow: 0 4px 12px rgba(8, 31, 92, 0.16);
+}
+
+.brand-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    color: var(--navy);
+    line-height: 1.25;
+}
+
+.brand-copy strong {
+    white-space: nowrap;
+    font-family: "STKaiti", "KaiTi", "Microsoft YaHei", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+}
+
+.brand-copy small {
+    margin-top: 4px;
+    white-space: nowrap;
+    color: #795626;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.25px;
+}
+
 .main-nav {
     display: flex;
     align-items: center;
@@ -1831,6 +1874,32 @@ textarea:focus {
         height: 64px;
     }
 
+    .site-header .brand {
+        width: 340px;
+        min-width: 0;
+        max-width: 340px;
+        flex-basis: 340px;
+        gap: 9px;
+    }
+
+    .site-header .brand-logo {
+        width: 60px;
+        height: 60px;
+        flex-basis: 60px;
+        border-radius: 9px;
+    }
+
+    .brand-copy strong {
+        font-size: 12.5px;
+        letter-spacing: 0.45px;
+    }
+
+    .brand-copy small {
+        margin-top: 3px;
+        font-size: 8px;
+        letter-spacing: 0;
+    }
+
     .menu-toggle {
         display: block;
     }
@@ -1956,6 +2025,32 @@ textarea:focus {
 
     .brand-logo {
         height: 54px;
+    }
+
+    .site-header .brand {
+        width: 240px;
+        min-width: 0;
+        max-width: 240px;
+        flex-basis: 240px;
+        gap: 7px;
+    }
+
+    .site-header .brand-logo {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        border-radius: 8px;
+    }
+
+    .brand-copy strong {
+        font-size: 9.5px;
+        letter-spacing: 0;
+    }
+
+    .brand-copy small {
+        margin-top: 2px;
+        font-size: 6.8px;
+        letter-spacing: -0.1px;
     }
 
     .footer-brand {
