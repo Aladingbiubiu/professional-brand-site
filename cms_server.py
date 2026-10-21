@@ -439,6 +439,7 @@ class CMSHandler(SimpleHTTPRequestHandler):
             ("about.html", "monthly", "0.8"),
             ("services.html", "monthly", "0.8"),
             ("insights.html", "daily", "0.9"),
+            ("monitor.html", "monthly", "0.7"),
             ("contact.html", "monthly", "0.6"),
         ]
         urls = [

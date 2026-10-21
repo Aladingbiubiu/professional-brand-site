@@ -129,6 +129,7 @@ a {
     position: relative;
     color: #25334a;
     padding: 27px 0;
+    white-space: nowrap;
 }
 
 .main-nav a::after {
